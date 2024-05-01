@@ -22,15 +22,9 @@ type GreetingOutput struct {
 func main() {
 	router := gin.Default()
 
-	testg := router.Group("/test")
+	group := router.Group("/api")
 
-	testg.GET("/helloworld", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "Hello, world!",
-		})
-	})
-
-	api := humagin.New(router, huma.DefaultConfig("My API", "1.0.0"))
+	api := humagin.NewWithGroup(router, group, huma.DefaultConfig("My API", "1.0.0"))
 	huma.Get(api, "/greeting/{name}", func(ctx context.Context, input *struct {
 		Name string `path:"name" maxLength:"30" example:"world" doc:"Name to greet"`
 	}) (*GreetingOutput, error) {
