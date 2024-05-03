@@ -11,8 +11,13 @@ import (
 
 var secretKey = []byte("secret-key")
 
-func createToken(username string) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
+type Auth struct {
+	Token        string `json:"token"`
+	ReflashToken string `json:"reflashToken"`
+}
+
+func CreateToken(username string) (*Auth, error) {
+	Token := jwt.NewWithClaims(jwt.SigningMethodHS256,
 		jwt.MapClaims{
 			"username": username,
 			"exp":      time.Now().Add(time.Minute * 30).Unix(),
@@ -26,19 +31,24 @@ func createToken(username string) (string, error) {
 			"iat":      time.Now().Unix(),
 		})
 
-	tokenString, err := token.SignedString(secretKey)
+	tokenString, err := Token.SignedString(secretKey)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	reflashTokenString, err := reflashToken.SignedString(secretKey)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return `{"token":"` + tokenString + `","reflashToken":"` + reflashTokenString + `"}`, nil
+	reruentoken := &Auth{
+		Token:        tokenString,
+		ReflashToken: reflashTokenString,
+	}
+
+	return reruentoken, nil
 }
 
-func reflashToken(reflashTokenString string) (string, error) {
+func ReflashToken(reflashTokenString string) (string, error) {
 	token, err := jwt.Parse(reflashTokenString, func(token *jwt.Token) (interface{}, error) {
 		return secretKey, nil
 	})
@@ -67,7 +77,7 @@ func reflashToken(reflashTokenString string) (string, error) {
 	return tokenString, nil
 }
 
-func parseToken(api huma.API) func(ctx huma.Context, next func(huma.Context)) {
+func ParseToken(api huma.API) func(ctx huma.Context, next func(huma.Context)) {
 
 	return func(ctx huma.Context, next func(huma.Context)) {
 
