@@ -1,21 +1,34 @@
 package main
 
 import (
-	"context"
-	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 
+	"RTD-backend/global"
+	"RTD-backend/model"
 	"RTD-backend/routes"
+	"RTD-backend/setting"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humagin"
+
+	_ "github.com/joho/godotenv/autoload"
 )
 
 type GreetingOutput struct {
 	Body struct {
 		Message string `json:"message" example:"Hello, world!" doc:"Greeting message"`
+	}
+}
+
+func init() {
+	err := SetupDB()
+	if err != nil {
+		log.Fatal(err)
+	} else {
+		log.Println("Database connected")
 	}
 }
 
@@ -26,14 +39,21 @@ func main() {
 	config := huma.DefaultConfig("My API", "1.0.0")
 	config.Servers = []*huma.Server{{URL: "http://localhost:8888/api"}}
 	api := humagin.NewWithGroup(router, group, config)
-	huma.Get(api, "/greeting/{name}", func(ctx context.Context, input *struct {
-		Name string `path:"name" maxLength:"30" example:"world" doc:"Name to greet"`
-	}) (*GreetingOutput, error) {
-		resp := &GreetingOutput{}
-		resp.Body.Message = fmt.Sprintf("Hello, %s!", input.Name)
-		return resp, nil
-	})
 	routes.Helloworld(api)
 	routes.Register(api)
+	log.Println("Server started on http://127.0.0.1:8888")
+	log.Println("Docs  http://127.0.0.1:8888/api/docs")
 	http.ListenAndServe("127.0.0.1:8888", router)
+}
+
+func SetupDB() error {
+	var err error
+
+	DBSetting := setting.GetDatabaseSetting()
+	global.DBEngine, err = model.NewDBEngine(DBSetting)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
