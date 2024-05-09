@@ -40,7 +40,7 @@ func main() {
 	config.Servers = []*huma.Server{{URL: "http://localhost:8888/api"}}
 	api := humagin.NewWithGroup(router, group, config)
 	routes.Helloworld(api)
-	routes.Register(api)
+	routes.User(api)
 	log.Println("Server started on http://127.0.0.1:8888")
 	log.Println("Docs  http://127.0.0.1:8888/api/docs")
 	http.ListenAndServe("127.0.0.1:8888", router)
