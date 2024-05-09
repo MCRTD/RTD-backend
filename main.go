@@ -46,6 +46,25 @@ func main() {
 	http.ListenAndServe("127.0.0.1:8888", router)
 }
 
+func Syncddb() {
+	err := global.DBEngine.AutoMigrate(
+		&model.Social{},
+		&model.User{},
+		&model.Comment{},
+		&model.Image{},
+		&model.LitematicaObj{},
+		&model.LitematicaFile{},
+		&model.Litematica{},
+		&model.Group{},
+		&model.Server{},
+		&model.ResourcePack{},
+		&model.LitematicaServer{},
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
 func SetupDB() error {
 	var err error
 
@@ -54,6 +73,7 @@ func SetupDB() error {
 	if err != nil {
 		return err
 	}
+	Syncddb()
 
 	return nil
 }

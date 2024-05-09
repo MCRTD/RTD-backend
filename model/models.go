@@ -36,31 +36,34 @@ type User struct {
 
 type Comment struct {
 	gorm.Model
-	Context string `gorm:"not null"`
-	UserID  int    `gorm:"not null"`
-	User    User   `gorm:"foreignKey:UserID"`
+	Context      string `gorm:"not null"`
+	UserID       int    `gorm:"not null"`
+	User         User   `gorm:"foreignKey:UserID"`
+	LitematicaID int    `gorm:"not null"`
 }
 
 type Image struct {
 	gorm.Model
-	ImageName string `gorm:"type:not null"`
-	ImagePath string `gorm:"type:not null"`
+	ImageName    string `gorm:"not null"`
+	ImagePath    string `gorm:"not null"`
+	LitematicaID int    `gorm:"not null"`
 }
 
 type LitematicaObj struct {
 	gorm.Model
-	FilePath    string `gorm:"type:not null"`
-	ZipFilePath string `gorm:"type:not null"`
+	FilePath    string `gorm:"not null"`
+	ZipFilePath string `gorm:"not null"`
 }
 
 type LitematicaFile struct {
 	gorm.Model
 	Size            int           `gorm:"not null"`
-	Description     string        `gorm:"type:not null"`
-	FileName        string        `gorm:"type:not null"`
-	FilePath        string        `gorm:"type:not null"`
+	Description     string        `gorm:"not null"`
+	FileName        string        `gorm:"not null"`
+	FilePath        string        `gorm:"not null"`
 	DownloadCount   int           `gorm:"not null"`
 	ReleaseDate     time.Time     `gorm:"not null"`
+	LitematicaID    int           `gorm:"not null"`
 	LitematicaObjID int           `gorm:"not null"`
 	LitematicaObj   LitematicaObj `gorm:"foreignKey:LitematicaObjID"`
 }
@@ -84,9 +87,9 @@ type Litematica struct {
 
 type Group struct {
 	gorm.Model
-	GroupName   string  `gorm:"type:not null"`
-	Description string  `gorm:"type:not null"`
-	Avatar      string  `gorm:"type:not null"`
+	GroupName   string  `gorm:"not null"`
+	Description string  `gorm:"not null"`
+	Avatar      string  `gorm:"not null"`
 	SocialID    int     `gorm:"not null"`
 	Social      Social  `gorm:"foreignKey:SocialID"`
 	Users       []*User `gorm:"many2many:user_groups;"`
@@ -94,9 +97,9 @@ type Group struct {
 
 type Server struct {
 	gorm.Model
-	ServerName  string  `gorm:"type:not null"`
-	Description string  `gorm:"type:not null"`
-	Avatar      string  `gorm:"type:not null"`
+	ServerName  string  `gorm:"not null"`
+	Description string  `gorm:"not null"`
+	Avatar      string  `gorm:"not null"`
 	SocialID    int     `gorm:"not null"`
 	Social      Social  `gorm:"foreignKey:SocialID"`
 	Users       []*User `gorm:"many2many:user_servers;"`
@@ -104,14 +107,14 @@ type Server struct {
 
 type ResourcePack struct {
 	gorm.Model
-	Name string `gorm:"type:not null"`
-	Path string `gorm:"type:not null"`
+	Name string `gorm:"not null"`
+	Path string `gorm:"not null"`
 }
 
 type LitematicaServer struct {
 	gorm.Model
-	ServerName string `gorm:"type:not null"`
-	ServerIP   string `gorm:"type:not null"`
+	ServerName string `gorm:"not null"`
+	ServerIP   string `gorm:"not null"`
 	Port       int    `gorm:"not null"`
-	Password   string `gorm:"type:not null"`
+	Password   string `gorm:"not null"`
 }
