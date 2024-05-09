@@ -26,7 +26,7 @@ type User struct {
 	Avatar        string
 	JoinedTime    time.Time     `gorm:"not null"`
 	LasttimeLogin time.Time     `gorm:"not null"`
-	Admin         int           `gorm:"not null"`
+	Admin         bool          `gorm:"not null default:false"`
 	SocialID      int           `gorm:"not null"`
 	Social        Social        `gorm:"foreignKey:SocialID"`
 	Litematicas   []*Litematica `gorm:"many2many:litematica_creators;"`
