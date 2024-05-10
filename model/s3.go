@@ -1,27 +1,13 @@
 package model
 
 import (
-	"log"
+	"os"
 
-	"github.com/minio/minio-go/v7"
-	"github.com/minio/minio-go/v7/pkg/credentials"
+	storage_go "github.com/supabase-community/storage-go"
 )
 
-func NewS3Client() *minio.Client {
-	endpoint := "https://swomajagzechqsnrpefx.supabase.co/storage/v1/s3"
-	accessKeyID := ""
-	secretAccessKey := ""
-	useSSL := true
-	// bucketName := "litematica"
-	// location := "ap-northeast-1"
-
-	minioClient, err := minio.New(endpoint, &minio.Options{
-		Creds:  credentials.NewStaticV4(accessKeyID, secretAccessKey, ""),
-		Secure: useSSL,
-	})
-	if err != nil {
-		log.Fatalln(err)
-	}
-	return minioClient
-
+func NewS3Client() *storage_go.Client {
+	endpoint := "swomajagzechqsnrpefx.supabase.co/storage/v1"
+	storageClient := storage_go.NewClient(endpoint, os.Getenv("Supabasekey"), nil)
+	return storageClient
 }

@@ -1,11 +1,11 @@
 package global
 
 import (
-	"github.com/minio/minio-go/v7"
+	storage_go "github.com/supabase-community/storage-go"
 	"gorm.io/gorm"
 )
 
 var (
 	DBEngine *gorm.DB
-	S3Client *minio.Client
+	S3Client *storage_go.Client
 )
