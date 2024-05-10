@@ -18,12 +18,12 @@ type Social struct {
 
 type User struct {
 	gorm.Model
-	Username      string `gorm:"not null"`
-	Email         string `gorm:"not null"`
-	Password      string `gorm:"not null"`
-	DiscordID     *int
-	Description   string
-	Avatar        string
+	Username      string        `gorm:"not null"`
+	Email         string        `gorm:"not null"`
+	Password      string        `gorm:"not null"`
+	DiscordID     *int          `gorm:"default:null"`
+	Description   string        `gorm:"default:null"`
+	Avatar        string        `gorm:"default:null"`
 	JoinedTime    time.Time     `gorm:"not null"`
 	LasttimeLogin time.Time     `gorm:"not null"`
 	Admin         bool          `gorm:"not null default:false"`
@@ -61,23 +61,23 @@ type LitematicaFile struct {
 	Description     string        `gorm:"not null"`
 	FileName        string        `gorm:"not null"`
 	FilePath        string        `gorm:"not null"`
-	DownloadCount   int           `gorm:"not null"`
+	DownloadCount   int           `gorm:"not null default:0"`
 	ReleaseDate     time.Time     `gorm:"not null"`
 	LitematicaID    int           `gorm:"not null"`
-	LitematicaObjID int           `gorm:"not null"`
+	LitematicaObjID int           `gorm:"default:null"`
 	LitematicaObj   LitematicaObj `gorm:"foreignKey:LitematicaObjID"`
 }
 
 type Litematica struct {
 	gorm.Model
-	LitematicaName string `gorm:"not null"`
-	Version        string `gorm:"not null"`
-	Description    string `gorm:"not null"`
-	Tags           string `gorm:"not null"`
-	Vote           int    `gorm:"not null Default:0"`
-	GroupID        int
-	Group          Group `gorm:"foreignKey:GroupID"`
-	ServerID       int
+	LitematicaName string  `gorm:"not null"`
+	Version        string  `gorm:"not null"`
+	Description    string  `gorm:"not null"`
+	Tags           string  `gorm:"not null"`
+	Vote           int     `gorm:"not null Default:0"`
+	GroupID        int     `gorm:"default:null"`
+	Group          Group   `gorm:"foreignKey:GroupID"`
+	ServerID       int     `gorm:"default:null"`
 	Server         Server  `gorm:"foreignKey:ServerID"`
 	Creators       []*User `gorm:"many2many:litematica_creators;"`
 	Images         []Image
