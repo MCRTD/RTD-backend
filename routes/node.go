@@ -17,13 +17,7 @@ type NodeInfo struct {
 
 type NodeOutput struct {
 	Body struct {
-		Servers []NodeInfo `json:"servers" example:"servers" doc:"Servers."`
-	}
-}
-
-type NormalOutput struct {
-	Body struct {
-		Message string `json:"message" example:"Success" doc:"Status message."`
+		Servers []NodeInfo `json:"servers"`
 	}
 }
 
@@ -33,7 +27,7 @@ func Node(api huma.API) {
 		Method:      "GET",
 		Path:        "/node",
 	}, func(ctx context.Context, input *struct {
-		node string `header:"node" example:"user" doc:"Username. nullable:true"`
+		node string `header:"node" example:"user" doc:"Username." nullable:"true"`
 	}) (*NodeOutput, error) {
 		resp := &NodeOutput{}
 		var servers []model.LitematicaServer
@@ -41,7 +35,7 @@ func Node(api huma.API) {
 		if input.node == "null" {
 			global.DBEngine.Model(&model.LitematicaServer{}).Find(&servers)
 		} else {
-			global.DBEngine.Model(&model.LitematicaServer{}).Where("node = ?", input.node).Find(&servers)
+			global.DBEngine.Model(&model.LitematicaServer{}).Where("ID = ?", input.node).Find(&servers)
 		}
 
 		for _, server := range servers {

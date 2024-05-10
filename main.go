@@ -41,6 +41,8 @@ func main() {
 	api := humagin.NewWithGroup(router, group, config)
 	routes.Helloworld(api)
 	routes.User(api)
+	routes.Node(api)
+	routes.Litematica(api)
 	log.Println("Server started on http://127.0.0.1:8888")
 	log.Println("Docs  http://127.0.0.1:8888/api/docs")
 	http.ListenAndServe("127.0.0.1:8888", router)

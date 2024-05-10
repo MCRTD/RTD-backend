@@ -30,7 +30,7 @@ type RegisterOutput struct {
 func User(api huma.API) {
 	huma.Register(api, huma.Operation{
 		OperationID: "getuser",
-		Method:      "GET",
+		Method:      "POST",
 		Path:        "/user",
 	}, func(ctx context.Context, input *struct {
 		user string `header:"user" example:"user" doc:"Username."`
@@ -47,7 +47,7 @@ func User(api huma.API) {
 	// register
 	huma.Register(api, huma.Operation{
 		OperationID: "register",
-		Method:      "GET",
+		Method:      "POST",
 		Path:        "/user/register",
 		// Middlewares: huma.Middlewares{middleware.ParseToken(api)},
 	}, func(ctx context.Context, input *struct {
