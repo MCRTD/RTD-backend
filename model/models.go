@@ -74,7 +74,7 @@ type Litematica struct {
 	Version        string `gorm:"not null"`
 	Description    string `gorm:"not null"`
 	Tags           string `gorm:"not null"`
-	Vote           int    `gorm:"not null"`
+	Vote           int    `gorm:"not null Default:0"`
 	GroupID        int
 	Group          Group `gorm:"foreignKey:GroupID"`
 	ServerID       int

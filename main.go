@@ -72,6 +72,7 @@ func SetupDB() error {
 
 	DBSetting := setting.GetDatabaseSetting()
 	global.DBEngine, err = model.NewDBEngine(DBSetting)
+	global.S3Client = model.NewS3Client()
 	if err != nil {
 		return err
 	}

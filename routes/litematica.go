@@ -16,7 +16,7 @@ type LitematicaOutput struct {
 
 func Litematica(api huma.API) {
 	huma.Register(api, huma.Operation{
-		OperationID: "getnode",
+		OperationID: "getlitematica",
 		Method:      "GET",
 		Path:        "/litematica",
 	}, func(ctx context.Context, input *struct {
@@ -31,6 +31,25 @@ func Litematica(api huma.API) {
 		}
 		resp.Body.Litematicas = append(resp.Body.Litematicas, Litematicas...)
 
+		return resp, nil
+
+	})
+
+	huma.Register(api, huma.Operation{
+		OperationID: "postlitematica",
+		Method:      "POST",
+		Path:        "/litematica",
+	}, func(ctx context.Context, input *struct {
+		Name        string `header:"Name" example:"litematica" doc:"Name"`
+		Version     string `header:"Version" example:"1.0" doc:"Version"`
+		Description string `header:"Description" example:"litematica" doc:"Description"`
+		Tags        string `header:"Tags" example:"litematica" doc:"Tags"`
+		GroupID     string `header:"GroupID" example:"1" doc:"GroupID" nullable:"true"`
+		ServerID    string `header:"ServerID" example:"1" doc:"ServerID" nullable:"true"`
+		File        []byte
+	}) (*NormalOutput, error) {
+		resp := &NormalOutput{}
+		resp.Body.Message = "Success"
 		return resp, nil
 
 	})
