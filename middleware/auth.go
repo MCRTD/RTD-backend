@@ -16,19 +16,19 @@ type Auth struct {
 	ReflashToken string `json:"reflashToken"`
 }
 
-func CreateToken(username string) (*Auth, error) {
+func CreateToken(UserID uint) (*Auth, error) {
 	Token := jwt.NewWithClaims(jwt.SigningMethodHS256,
 		jwt.MapClaims{
-			"username": username,
-			"exp":      time.Now().Add(time.Minute * 30).Unix(),
-			"iat":      time.Now().Unix(),
+			"userid": UserID,
+			"exp":    time.Now().Add(time.Minute * 30).Unix(),
+			"iat":    time.Now().Unix(),
 		})
 
 	reflashToken := jwt.NewWithClaims(jwt.SigningMethodHS256,
 		jwt.MapClaims{
-			"username": username,
-			"exp":      time.Now().AddDate(0, 1, 0).Unix(), // 1 month
-			"iat":      time.Now().Unix(),
+			"userid": UserID,
+			"exp":    time.Now().AddDate(0, 1, 0).Unix(), // 1 month
+			"iat":    time.Now().Unix(),
 		})
 
 	tokenString, err := Token.SignedString(secretKey)
@@ -60,13 +60,13 @@ func ReflashToken(reflashTokenString string) (string, error) {
 		return "", err
 	}
 
-	username := token.Claims.(jwt.MapClaims)["username"].(string)
+	userid := token.Claims.(jwt.MapClaims)["userid"].(string)
 
 	token = jwt.NewWithClaims(jwt.SigningMethodHS256,
 		jwt.MapClaims{
-			"username": username,
-			"exp":      time.Now().Add(time.Minute * 30).Unix(),
-			"iat":      time.Now().Unix(),
+			"userid": userid,
+			"exp":    time.Now().Add(time.Minute * 30).Unix(),
+			"iat":    time.Now().Unix(),
 		})
 
 	tokenString, err := token.SignedString(secretKey)
@@ -100,6 +100,8 @@ func ParseToken(api huma.API) func(ctx huma.Context, next func(huma.Context)) {
 			huma.WriteErr(api, ctx, http.StatusForbidden, "Forbidden")
 			return
 		}
+
+		ctx.AppendHeader("userid", token.Claims.(jwt.MapClaims)["userid"].(string))
 
 		next(ctx)
 	}

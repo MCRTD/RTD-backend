@@ -85,17 +85,40 @@ func User(api huma.API) {
 		Password string `header:"password" example:"password" doc:"Password."`
 	}) (*LoginOutput, error) {
 		resp := &LoginOutput{}
-		token, err := middleware.CreateToken(input.Username)
+
+		var user model.User
+
+		if global.DBEngine.Model(&model.User{}).Where("username = ? AND password = ?", input.Username, input.Password).First(&user).Error != nil {
+			return nil, errors.New("login failed")
+		}
+		token, err := middleware.CreateToken(user.ID)
 		if err != nil {
 			return nil, err
 		}
-		if global.DBEngine.Model(&model.User{}).Where("username = ? AND password = ?", input.Username, input.Password).First(&model.User{}).Error != nil {
-			return nil, errors.New("login failed")
-		}
-
 		resp.Body.Message = "login success!"
 		resp.SetCookie = append(resp.SetCookie, http.Cookie{Name: "token", Value: token.Token})
 		resp.SetCookie = append(resp.SetCookie, http.Cookie{Name: "reflashtoken", Value: token.ReflashToken})
+
+		return resp, nil
+	})
+
+	huma.Register(api, huma.Operation{
+		OperationID: "edituser",
+		Method:      "PATCH",
+		Path:        "/user/edit",
+		Middlewares: huma.Middlewares{middleware.ParseToken(api)},
+	}, func(ctx context.Context, input *struct {
+		Username    string `header:"username" example:"user" doc:"Username."`
+		Email       string `header:"email" example:"wow@gmail" doc:"Email."`
+		Description string `header:"Description" example:"hello how are you" doc:"user description."`
+	}) (*RegisterOutput, error) {
+		resp := &RegisterOutput{}
+		resp.Body.Message = "Edit success!"
+		global.DBEngine.Model(&model.User{}).Where("ID = ?", ctx.Value("userid")).Updates(&model.User{
+			Username:    input.Username,
+			Email:       input.Email,
+			Description: input.Description,
+		})
 
 		return resp, nil
 	})
