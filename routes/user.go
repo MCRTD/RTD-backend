@@ -33,11 +33,11 @@ func User(api huma.API) {
 		Method:      "POST",
 		Path:        "/user",
 	}, func(ctx context.Context, input *struct {
-		user string `header:"user" example:"user" doc:"Username."`
+		User string `header:"user" example:"user" doc:"Username."`
 	}) (*model.User, error) {
 		resp := &model.User{}
 		resp.Password = ""
-		res := global.DBEngine.Model(&model.User{}).Where("username = ?", input.user).First(&resp)
+		res := global.DBEngine.Model(&model.User{}).Where("username = ?", input.User).First(&resp)
 		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
 			return nil, res.Error
 		}
@@ -51,22 +51,22 @@ func User(api huma.API) {
 		Path:        "/user/register",
 		// Middlewares: huma.Middlewares{middleware.ParseToken(api)},
 	}, func(ctx context.Context, input *struct {
-		username string `header:"username" example:"user" doc:"Username."`
-		password string `header:"password" example:"password" doc:"Password."`
-		email    string `header:"email" example:"wow@mail.com" doc:"Email."`
+		Username string `header:"username" example:"user" doc:"Username."`
+		Password string `header:"password" example:"password" doc:"Password."`
+		Email    string `header:"email" example:"wow@mail.com" doc:"Email."`
 	}) (*RegisterOutput, error) {
 		resp := &RegisterOutput{}
 		resp.Body.Message = "Register success!"
 
-		res := global.DBEngine.Model(&model.User{}).Where("username = ?", input.username).First(&model.User{})
+		res := global.DBEngine.Model(&model.User{}).Where("username = ?", input.Username).First(&model.User{})
 		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
 			resp.Body.AleardyRegister = true
 		} else {
 			resp.Body.AleardyRegister = false
 			global.DBEngine.Create(&model.User{
-				Username:      input.username,
-				Email:         input.email,
-				Password:      input.password,
+				Username:      input.Username,
+				Email:         input.Email,
+				Password:      input.Password,
 				JoinedTime:    global.DBEngine.NowFunc(),
 				LasttimeLogin: global.DBEngine.NowFunc(),
 			})
@@ -81,15 +81,15 @@ func User(api huma.API) {
 		Path:        "/user/login",
 		// Middlewares: huma.Middlewares{middleware.ParseToken(api)},
 	}, func(ctx context.Context, input *struct {
-		username string `header:"username" example:"user" doc:"Username."`
-		password string `header:"password" example:"password" doc:"Password."`
+		Username string `header:"username" example:"user" doc:"Username."`
+		Password string `header:"password" example:"password" doc:"Password."`
 	}) (*LoginOutput, error) {
 		resp := &LoginOutput{}
-		token, err := middleware.CreateToken(input.username)
+		token, err := middleware.CreateToken(input.Username)
 		if err != nil {
 			return nil, err
 		}
-		if global.DBEngine.Model(&model.User{}).Where("username = ? AND password = ?", input.username, input.password).First(&model.User{}).Error != nil {
+		if global.DBEngine.Model(&model.User{}).Where("username = ? AND password = ?", input.Username, input.Password).First(&model.User{}).Error != nil {
 			return nil, errors.New("login failed")
 		}
 

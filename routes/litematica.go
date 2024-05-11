@@ -21,7 +21,7 @@ func Litematica(api huma.API) {
 		Method:      "GET",
 		Path:        "/litematica",
 	}, func(ctx context.Context, input *struct {
-		LitematicaID string `header:"LitematicaID" example:"1" doc:"LitematicaID" nullable:"true"`
+		LitematicaID string `header:"LitematicaID" example:"1" doc:"LitematicaID"`
 	}) (*LitematicaOutput, error) {
 		resp := &LitematicaOutput{}
 		var Litematicas []model.Litematica
@@ -45,8 +45,8 @@ func Litematica(api huma.API) {
 		Version     string `header:"Version" example:"1.0" doc:"Version"`
 		Description string `header:"Description" example:"litematica" doc:"Description"`
 		Tags        string `header:"Tags" example:"litematica" doc:"Tags"`
-		GroupID     *int   `header:"GroupID" example:"1" doc:"GroupID" nullable:"true"`
-		ServerID    *int   `header:"ServerID" example:"1" doc:"ServerID" nullable:"true"`
+		GroupID     int    `header:"GroupID" example:"1" doc:"GroupID"`
+		ServerID    int    `header:"ServerID" example:"1" doc:"ServerID"`
 		RawBody     multipart.Form
 	}) (*NormalOutput, error) {
 
@@ -81,12 +81,12 @@ func Litematica(api huma.API) {
 			},
 		}
 
-		if input.GroupID != nil {
-			litematica.GroupID = *input.GroupID
+		if input.GroupID == -1 {
+			litematica.GroupID = input.GroupID
 		}
 
-		if input.ServerID != nil {
-			litematica.ServerID = *input.ServerID
+		if input.ServerID == -1 {
+			litematica.ServerID = input.ServerID
 		}
 
 		global.DBEngine.Create(litematica)

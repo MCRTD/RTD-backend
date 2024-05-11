@@ -13,6 +13,32 @@ type Nodetexturepack struct {
 	Texturepacks []string
 }
 
+type NodeOBJMessage struct {
+	Message string
+}
+
+func MakeOBJ(id string, texturepack string, name string) NodeOBJMessage {
+	var servers []model.LitematicaServer
+	global.DBEngine.Model(&model.LitematicaServer{}).Find(&servers)
+	server := servers[0]
+	req, err := http.NewRequest("POST", server.ServerIP+":"+string(rune(server.Port))+"/litematica/upload", nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("texturepack", texturepack)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatal(err)
+	}
+	resp.Body.Close()
+	global.S3Client.UpdateFile("litematica", name+".obj", resp.Body)
+
+	return NodeOBJMessage{Message: "Success"}
+}
+
 func GetResourcePacksFromNode(id string) []Nodetexturepack {
 	var servers []model.LitematicaServer
 	global.DBEngine.Model(&model.LitematicaServer{}).Where("id = ?", id).Find(&servers)

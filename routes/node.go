@@ -27,15 +27,14 @@ func Node(api huma.API) {
 		Method:      "GET",
 		Path:        "/node",
 	}, func(ctx context.Context, input *struct {
-		node string `header:"node" example:"user" doc:"Username." nullable:"true"`
+		Nodename string `header:"Nodename" example:"server1" doc:"the name of server"`
 	}) (*NodeOutput, error) {
 		resp := &NodeOutput{}
 		var servers []model.LitematicaServer
-
-		if input.node == "null" {
+		if input.Nodename == "" {
 			global.DBEngine.Model(&model.LitematicaServer{}).Find(&servers)
 		} else {
-			global.DBEngine.Model(&model.LitematicaServer{}).Where("ID = ?", input.node).Find(&servers)
+			global.DBEngine.Model(&model.LitematicaServer{}).Where("ID = ?", input.Nodename).Find(&servers)
 		}
 
 		for _, server := range servers {
@@ -54,15 +53,15 @@ func Node(api huma.API) {
 		Method:      "POST",
 		Path:        "/node",
 	}, func(ctx context.Context, input *struct {
-		Name     string `header:"node" example:"server1" doc:"Server name"`
-		ip       string `header:"ip" example:"127.0.0.1" doc:"IP"`
+		Name     string `header:"name" example:"server1" doc:"Server name"`
+		Ip       string `header:"ip" example:"127.0.0.1" doc:"IP"`
 		Port     int    `header:"port" example:"8888" doc:"Port"`
 		Password string `header:"password" example:"password" doc:"Password."`
 	}) (*NormalOutput, error) {
 		resp := &NormalOutput{}
 		global.DBEngine.Create(&model.LitematicaServer{
 			ServerName: input.Name,
-			ServerIP:   input.ip,
+			ServerIP:   input.Ip,
 			Port:       input.Port,
 			Password:   input.Password,
 		})

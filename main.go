@@ -13,6 +13,7 @@ import (
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humagin"
+	"github.com/gin-contrib/cors"
 
 	_ "github.com/joho/godotenv/autoload"
 )
@@ -34,6 +35,8 @@ func init() {
 
 func main() {
 	router := gin.Default()
+
+	router.Use(cors.Default())
 
 	group := router.Group("/api")
 	config := huma.DefaultConfig("My API", "1.0.0")
@@ -76,7 +79,7 @@ func SetupDB() error {
 	if err != nil {
 		return err
 	}
-	Syncddb()
+	// Syncddb()
 
 	return nil
 }
