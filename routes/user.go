@@ -114,10 +114,10 @@ func User(api huma.API) {
 	}) (*RegisterOutput, error) {
 		resp := &RegisterOutput{}
 		resp.Body.Message = "Edit success!"
-		global.DBEngine.Model(&model.User{}).Where("ID = ?", ctx.Value("userid")).Updates(&model.User{
-			Username:    input.Username,
-			Email:       input.Email,
-			Description: input.Description,
+		global.DBEngine.Model(&model.User{}).Where("ID = ?", ctx.Value("userid")).Updates(map[string]interface{}{
+			"Username":    input.Username,
+			"Email":       input.Email,
+			"Description": input.Description,
 		})
 
 		return resp, nil
