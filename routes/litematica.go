@@ -92,6 +92,67 @@ func Litematica(api huma.API) {
 		global.DBEngine.Create(litematica)
 		resp.Body.Message = "Success"
 		return resp, nil
+	})
 
+	huma.Register(api, huma.Operation{
+		OperationID: "editlitematica",
+		Method:      "PATCH",
+		Path:        "/litematica",
+	}, func(ctx context.Context, input *struct {
+		LitematicaID   int    `header:"LitematicaID" example:"1" doc:"LitematicaID"`
+		LitematicaName string `header:"LitematicaName" example:"litematica" doc:"LitematicaName"`
+		Version        string `header:"Version" example:"1.0" doc:"Version"`
+		Description    string `header:"Description" example:"litematica" doc:"Description"`
+		Tags           string `header:"Tags" example:"litematica" doc:"Tags"`
+		GroupID        int    `header:"GroupID" example:"1" doc:"GroupID"`
+		ServerID       int    `header:"ServerID" example:"1" doc:"ServerID"`
+	}) (*NormalOutput, error) {
+		resp := &NormalOutput{}
+
+		global.DBEngine.Model(&model.Litematica{}).Where("ID = ?", input.LitematicaID).Updates(
+			map[string]interface{}{
+				"LitematicaName": input.LitematicaName,
+				"Version":        input.Version,
+				"Description":    input.Description,
+				"Tags":           input.Tags,
+				"GroupID":        input.GroupID,
+				"ServerID":       input.ServerID,
+			})
+		resp.Body.Message = "Success"
+		return resp, nil
+	})
+
+	huma.Register(api, huma.Operation{
+		OperationID: "addlitematicafile",
+		Method:      "POST",
+		Path:        "/litematica/file",
+	}, func(ctx context.Context, input *struct {
+		LitematicaID int `header:"LitematicaID" example:"1" doc:"LitematicaID"`
+		RawBody      multipart.Form
+	}) (*NormalOutput, error) {
+		resp := &NormalOutput{}
+
+		file := input.RawBody.File["litematica"][0]
+		filedata, err := file.Open()
+		if err != nil {
+			resp.Body.Message = "Failed"
+			return resp, nil
+		}
+		_, err = global.S3Client.UploadFile("litematica", file.Filename, filedata)
+		if err != nil {
+			resp.Body.Message = "Failed"
+			return resp, nil
+		}
+		url := global.S3Client.GetPublicUrl("litematica", file.Filename)
+
+		litematicaFile := &model.LitematicaFile{
+			LitematicaID: input.LitematicaID,
+			FileName:     file.Filename,
+			FilePath:     url.SignedURL,
+		}
+		global.DBEngine.Create(litematicaFile)
+
+		resp.Body.Message = "Success"
+		return resp, nil
 	})
 }
