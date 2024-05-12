@@ -17,6 +17,7 @@ import (
 	"github.com/gin-contrib/cors"
 
 	_ "github.com/joho/godotenv/autoload"
+	storage_go "github.com/supabase-community/storage-go"
 )
 
 type GreetingOutput struct {
@@ -83,6 +84,24 @@ func SetupDB() error {
 		return err
 	}
 	// Syncddb()
+	_, error := global.S3Client.GetBucket("litematica")
+	if error != nil {
+		_, err := global.S3Client.CreateBucket("litematica", storage_go.BucketOptions{
+			Public: true,
+		})
+		if err != nil {
+			return err
+		}
+	}
+	_, error = global.S3Client.GetBucket("texturepack")
+	if error != nil {
+		_, err := global.S3Client.CreateBucket("texturepack", storage_go.BucketOptions{
+			Public: true,
+		})
+		if err != nil {
+			return err
+		}
+	}
 
 	return nil
 }

@@ -6,7 +6,10 @@ import (
 	"RTD-backend/model"
 	"context"
 	"fmt"
+	"log"
+	"mime/multipart"
 	"strconv"
+	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
 	"gorm.io/gorm"
@@ -137,4 +140,37 @@ func Node(api huma.API) {
 		resp.Body.Texturepacks = texturepacks
 		return resp, nil
 	})
+
+	huma.Register(api, huma.Operation{
+		OperationID: "getnodetexturepack",
+		Method:      "POST",
+		Path:        "/node/texturepack",
+	}, func(ctx context.Context, input *struct {
+		Name    string `header:"Name" example:"vanilla" doc:"texturepack name"`
+		RawBody multipart.Form
+	}) (*NormalOutput, error) {
+		resp := &NormalOutput{}
+		file := input.RawBody.File["texturepack"][0]
+		filedata, err := file.Open()
+		if err != nil {
+			resp.Body.Message = "Failed in opening file"
+			log.Println(err)
+			return resp, err
+		}
+		if strings.Split(file.Filename, ".")[len(strings.Split(file.Filename, "."))-1] != "zip" {
+			resp.Body.Message = "must be a zip file"
+			log.Println(err)
+			return resp, err
+		}
+
+		go func() {
+			err = lapi.UploadTexturePackToNode(input.Name, filedata)
+			if err != nil {
+				log.Println(err)
+			}
+		}()
+		resp.Body.Message = "File is being uploaded"
+		return resp, nil
+	})
+
 }
