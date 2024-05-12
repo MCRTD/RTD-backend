@@ -4,6 +4,7 @@ import (
 	"RTD-backend/global"
 	"RTD-backend/model"
 	"context"
+	"fmt"
 	"strconv"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -13,12 +14,21 @@ type NodeInfo struct {
 	Name string
 	IP   string
 	Port string
+	ID   uint
 }
 
 type NodeOutput struct {
 	Body struct {
 		Servers []NodeInfo `json:"servers"`
 	}
+}
+
+type PatchNode struct {
+	ID       uint   `json:"ID"`
+	Name     string `json:"Name"`
+	IP       string `json:"Ip"`
+	Port     int    `json:"Port"`
+	Password string `json:"Password"`
 }
 
 func Node(api huma.API) {
@@ -42,6 +52,7 @@ func Node(api huma.API) {
 				Name: server.ServerName,
 				IP:   server.ServerIP,
 				Port: strconv.Itoa(server.Port),
+				ID:   server.ID,
 			})
 		}
 		return resp, nil
@@ -64,6 +75,26 @@ func Node(api huma.API) {
 			ServerIP:   input.Ip,
 			Port:       input.Port,
 			Password:   input.Password,
+		})
+		resp.Body.Message = "Add node success!"
+		return resp, nil
+
+	})
+
+	huma.Register(api, huma.Operation{
+		OperationID: "patchnode",
+		Method:      "PATCH",
+		Path:        "/node",
+	}, func(ctx context.Context, input *struct {
+		Body PatchNode
+	}) (*NormalOutput, error) {
+		resp := &NormalOutput{}
+		fmt.Println(input.Body)
+		global.DBEngine.Model(&model.LitematicaServer{}).Where("ID = ?", input.Body.ID).Updates(&map[string]interface{}{
+			"ServerName": input.Body.Name,
+			"ServerIP":   input.Body.IP,
+			"Port":       input.Body.Port,
+			"Password":   input.Body.Password,
 		})
 		resp.Body.Message = "Add node success!"
 		return resp, nil
