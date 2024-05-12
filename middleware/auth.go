@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"net/http"
-	"strings"
+	"strconv"
 	"time"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -19,14 +19,14 @@ type Auth struct {
 func CreateToken(UserID uint) (*Auth, error) {
 	Token := jwt.NewWithClaims(jwt.SigningMethodHS256,
 		jwt.MapClaims{
-			"userid": UserID,
+			"userid": strconv.FormatUint(uint64(UserID), 10),
 			"exp":    time.Now().Add(time.Minute * 30).Unix(),
 			"iat":    time.Now().Unix(),
 		})
 
 	reflashToken := jwt.NewWithClaims(jwt.SigningMethodHS256,
 		jwt.MapClaims{
-			"userid": UserID,
+			"userid": strconv.FormatUint(uint64(UserID), 10),
 			"exp":    time.Now().AddDate(0, 1, 0).Unix(), // 1 month
 			"iat":    time.Now().Unix(),
 		})
@@ -81,14 +81,21 @@ func ParseToken(api huma.API) func(ctx huma.Context, next func(huma.Context)) {
 
 	return func(ctx huma.Context, next func(huma.Context)) {
 
-		tokenString := strings.TrimPrefix(ctx.Header("Authorization"), "Bearer ")
+		// tokenString := strings.TrimPrefix(ctx.Header("Authorization"), "Bearer ")
+		// from cookie get token
 
-		if tokenString == "" {
+		tokenString, err := huma.ReadCookie(ctx, "token")
+		if err != nil {
 			huma.WriteErr(api, ctx, http.StatusForbidden, "Forbidden")
 			return
 		}
 
-		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if tokenString.Value == "" {
+			huma.WriteErr(api, ctx, http.StatusForbidden, "Forbidden")
+			return
+		}
+
+		token, err := jwt.Parse(tokenString.Value, func(token *jwt.Token) (interface{}, error) {
 			return secretKey, nil
 		})
 		if err != nil {
@@ -101,7 +108,7 @@ func ParseToken(api huma.API) func(ctx huma.Context, next func(huma.Context)) {
 			return
 		}
 
-		ctx.AppendHeader("userid", token.Claims.(jwt.MapClaims)["userid"].(string))
+		ctx = huma.WithValue(ctx, "userid", token.Claims.(jwt.MapClaims)["userid"].(string))
 
 		next(ctx)
 	}

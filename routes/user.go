@@ -37,7 +37,7 @@ type UserOutput struct {
 func User(api huma.API) {
 	huma.Register(api, huma.Operation{
 		OperationID: "getuser",
-		Method:      "POST",
+		Method:      "GET",
 		Path:        "/user",
 	}, func(ctx context.Context, input *struct {
 		User string `header:"user" example:"user" doc:"Username."`
@@ -138,20 +138,26 @@ func User(api huma.API) {
 	huma.Register(api, huma.Operation{
 		OperationID: "edituser",
 		Method:      "PATCH",
-		Path:        "/user/edit",
+		Path:        "/user",
 		Middlewares: huma.Middlewares{middleware.ParseToken(api)},
 	}, func(ctx context.Context, input *struct {
-		Username    string `header:"username" example:"user" doc:"Username."`
+		Username    string `header:"username" example:"user" doc:"Username." required:"true"`
 		Email       string `header:"email" example:"wow@gmail" doc:"Email."`
 		Description string `header:"Description" example:"hello how are you" doc:"user description."`
-	}) (*RegisterOutput, error) {
-		resp := &RegisterOutput{}
-		resp.Body.Message = "Edit success!"
-		global.DBEngine.Model(&model.User{}).Where("ID = ?", ctx.Value("userid")).Updates(map[string]interface{}{
+	}) (*NormalOutput, error) {
+		resp := &NormalOutput{}
+		fmt.Println(ctx.Value("userid"))
+		result := global.DBEngine.Model(&model.User{}).Where("ID = ?", ctx.Value("userid")).Updates(map[string]interface{}{
 			"Username":    input.Username,
 			"Email":       input.Email,
 			"Description": input.Description,
 		})
+		if result.Error != nil {
+			fmt.Println("Failed to update user:", result.Error)
+			resp.Body.Message = "Edit failed!"
+			return resp, result.Error
+		}
+		resp.Body.Message = "Edit success!"
 
 		return resp, nil
 	})
