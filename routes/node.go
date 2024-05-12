@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/danielgtaylor/huma/v2"
+	"gorm.io/gorm"
 )
 
 type NodeInfo struct {
@@ -99,5 +100,19 @@ func Node(api huma.API) {
 		resp.Body.Message = "Add node success!"
 		return resp, nil
 
+	})
+
+	huma.Register(api, huma.Operation{
+		OperationID: "deletenode",
+		Method:      "DELETE",
+		Path:        "/node",
+	}, func(ctx context.Context, input *struct {
+		NodeID uint `header:"NodeID" example:"1" doc:"NodeID"`
+	}) (*NormalOutput, error) {
+		resp := &NormalOutput{}
+		node := model.LitematicaServer{Model: gorm.Model{ID: input.NodeID}}
+		global.DBEngine.Delete(&node)
+		resp.Body.Message = "Delete node success!"
+		return resp, nil
 	})
 }
