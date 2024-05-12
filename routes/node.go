@@ -2,6 +2,7 @@ package routes
 
 import (
 	"RTD-backend/global"
+	"RTD-backend/lapi"
 	"RTD-backend/model"
 	"context"
 	"fmt"
@@ -32,20 +33,26 @@ type PatchNode struct {
 	Password string `json:"Password"`
 }
 
+type TexturepackResponse struct {
+	Body struct {
+		Texturepacks []string `json:"texturepacks"`
+	}
+}
+
 func Node(api huma.API) {
 	huma.Register(api, huma.Operation{
 		OperationID: "getnode",
 		Method:      "GET",
 		Path:        "/node",
 	}, func(ctx context.Context, input *struct {
-		Nodename string `header:"Nodename" example:"server1" doc:"the name of server"`
+		Nodeid string `header:"Nodeid" example:"1" doc:"the id of server"`
 	}) (*NodeOutput, error) {
 		resp := &NodeOutput{}
 		var servers []model.LitematicaServer
-		if input.Nodename == "" {
+		if input.Nodeid == "" {
 			global.DBEngine.Model(&model.LitematicaServer{}).Find(&servers)
 		} else {
-			global.DBEngine.Model(&model.LitematicaServer{}).Where("ID = ?", input.Nodename).Find(&servers)
+			global.DBEngine.Model(&model.LitematicaServer{}).Where("ID = ?", input.Nodeid).Find(&servers)
 		}
 
 		for _, server := range servers {
@@ -113,6 +120,21 @@ func Node(api huma.API) {
 		node := model.LitematicaServer{Model: gorm.Model{ID: input.NodeID}}
 		global.DBEngine.Delete(&node)
 		resp.Body.Message = "Delete node success!"
+		return resp, nil
+	})
+
+	huma.Register(api, huma.Operation{
+		OperationID: "gettexturepack",
+		Method:      "GET",
+		Path:        "/node/texturepack",
+	}, func(ctx context.Context, input *struct {
+		Nodeid string `header:"Nodeid" example:"1" doc:"the id of server" required:"true"`
+	}) (*TexturepackResponse, error) {
+
+		texturepacks := lapi.GetResourcePacksFromNode(input.Nodeid)
+		fmt.Println(texturepacks)
+		resp := &TexturepackResponse{}
+		resp.Body.Texturepacks = texturepacks
 		return resp, nil
 	})
 }

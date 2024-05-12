@@ -100,6 +100,7 @@ func ReflashHandler(ctx huma.Context, next func(huma.Context)) {
 	}
 	cookie := http.Cookie{
 		Name:  "token",
+		Path:  "/",
 		Value: token,
 	}
 	ctx.AppendHeader("Set-Cookie", cookie.String())

@@ -82,12 +82,12 @@ func MakeOBJ(url string, texturepack string, name string, id int) NodeOBJMessage
 	return NodeOBJMessage{Message: "Success"}
 }
 
-func GetResourcePacksFromNode(id string) []Nodetexturepack {
+func GetResourcePacksFromNode(id string) []string {
 	var servers []model.LitematicaServer
 	global.DBEngine.Model(&model.LitematicaServer{}).Where("id = ?", id).Find(&servers)
-	var results []Nodetexturepack
+	var results []string
 	for _, url := range servers {
-		req, err := http.NewRequest("GET", url.ServerIP+":"+string(rune(url.Port))+"/texturepack/list", nil)
+		req, err := http.NewRequest("GET", url.ServerIP+":"+strconv.Itoa(url.Port)+"/texturepack/list", nil)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -107,7 +107,7 @@ func GetResourcePacksFromNode(id string) []Nodetexturepack {
 		if err != nil {
 			log.Fatal(err)
 		}
-		results = append(results, result)
+		results = append(results, result.Texturepacks...)
 	}
 	return results
 
