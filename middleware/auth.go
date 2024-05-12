@@ -79,8 +79,9 @@ func ReflashToken(reflashTokenString string) (string, error) {
 
 func ReflashHandler(ctx huma.Context, next func(huma.Context)) {
 	tokenString, err := huma.ReadCookie(ctx, "token")
-	if err != nil {
+	if err != nil || tokenString == nil {
 		next(ctx)
+		return
 	}
 	_, parseErr := jwt.Parse(tokenString.Value, func(token *jwt.Token) (interface{}, error) {
 		return secretKey, nil
