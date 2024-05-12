@@ -20,14 +20,14 @@ type User struct {
 	gorm.Model
 	Username      string        `gorm:"not null"`
 	Email         string        `gorm:"not null"`
-	Password      string        `gorm:"not null"`
+	Password      string        `gorm:"not null" json:"password,omitempty"`
 	DiscordID     *int          `gorm:"default:null"`
 	Description   string        `gorm:"default:null"`
 	Avatar        string        `gorm:"default:null"`
 	JoinedTime    time.Time     `gorm:"not null"`
 	LasttimeLogin time.Time     `gorm:"not null"`
 	Admin         bool          `gorm:"not null default:false"`
-	SocialID      int           `gorm:"not null"`
+	SocialID      uint          `gorm:"not null"`
 	Social        Social        `gorm:"foreignKey:SocialID"`
 	Litematicas   []*Litematica `gorm:"many2many:litematica_creators;"`
 	Groups        []*Group      `gorm:"many2many:user_groups;"`

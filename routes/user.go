@@ -3,6 +3,7 @@ package routes
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"RTD-backend/global"
@@ -23,7 +24,13 @@ type LoginOutput struct {
 type RegisterOutput struct {
 	Body struct {
 		Message         string `json:"message" example:"Success" doc:"Status message."`
-		AleardyRegister bool   `json:"firstRegister" example:"true" doc:"First register."`
+		AleardyRegister bool   `json:"AleardyRegister" example:"true" doc:"First register."`
+	}
+}
+
+type UserOutput struct {
+	Body struct {
+		Users []model.User `json:"Users"`
 	}
 }
 
@@ -34,14 +41,31 @@ func User(api huma.API) {
 		Path:        "/user",
 	}, func(ctx context.Context, input *struct {
 		User string `header:"user" example:"user" doc:"Username."`
-	}) (*model.User, error) {
-		resp := &model.User{}
-		resp.Password = ""
-		res := global.DBEngine.Model(&model.User{}).Where("username = ?", input.User).First(&resp)
-		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
-			return nil, res.Error
+	}) (*UserOutput, error) {
+		if input.User == "" {
+			resp := []*model.User{}
+			output := &UserOutput{}
+			res := global.DBEngine.Model(&model.User{}).Find(&resp)
+			if res.Error != nil && !errors.Is(res.Error, gorm.ErrRecordNotFound) {
+				return nil, res.Error
+			}
+			for _, user := range resp {
+				user.Password = ""
+				output.Body.Users = append(output.Body.Users, *user)
+			}
+			return output, nil
+
+		} else {
+			resp := &model.User{}
+			resp.Password = ""
+			res := global.DBEngine.Model(&model.User{}).Where("username = ?", input.User).First(&resp)
+			if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+				return nil, res.Error
+			}
+			output := &UserOutput{}
+			output.Body.Users = append(output.Body.Users, *resp)
+			return output, nil
 		}
-		return resp, nil
 	})
 
 	// register
@@ -57,19 +81,28 @@ func User(api huma.API) {
 	}) (*RegisterOutput, error) {
 		resp := &RegisterOutput{}
 		resp.Body.Message = "Register success!"
-
 		res := global.DBEngine.Model(&model.User{}).Where("username = ?", input.Username).First(&model.User{})
+		fmt.Print(res.Error)
 		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
-			resp.Body.AleardyRegister = true
-		} else {
 			resp.Body.AleardyRegister = false
-			global.DBEngine.Create(&model.User{
+			social := &model.Social{}
+			global.DBEngine.Create(social)
+			user := &model.User{
 				Username:      input.Username,
 				Email:         input.Email,
 				Password:      input.Password,
 				JoinedTime:    global.DBEngine.NowFunc(),
 				LasttimeLogin: global.DBEngine.NowFunc(),
-			})
+				SocialID:      social.ID,
+			}
+			result := global.DBEngine.Create(user)
+			if result.Error != nil {
+				fmt.Println("Failed to create user:", result.Error)
+				return nil, result.Error
+			}
+		} else {
+			resp.Body.AleardyRegister = true
+			fmt.Print(input)
 		}
 		return resp, nil
 
