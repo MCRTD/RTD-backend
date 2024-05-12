@@ -2,11 +2,14 @@ package routes
 
 import (
 	"RTD-backend/global"
+	"RTD-backend/middleware"
 	"RTD-backend/model"
 	"context"
+	"log"
 	"mime/multipart"
 
 	"github.com/danielgtaylor/huma/v2"
+	"gorm.io/gorm"
 )
 
 type LitematicaOutput struct {
@@ -25,10 +28,15 @@ func Litematica(api huma.API) {
 	}) (*LitematicaOutput, error) {
 		resp := &LitematicaOutput{}
 		var Litematicas []model.Litematica
-		if input.LitematicaID == "null" {
-			global.DBEngine.Model(&model.Litematica{}).Find(&Litematicas)
+		if input.LitematicaID == "" {
+			global.DBEngine.Preload("Files.LitematicaObj").Preload("Creators").Model(&model.Litematica{}).Find(&Litematicas)
 		} else {
-			global.DBEngine.Model(&model.Litematica{}).Where("ID = ?", input.LitematicaID).Find(&Litematicas)
+			global.DBEngine.Preload("Files.LitematicaObj").Preload("Creators").Model(&model.Litematica{}).Where("ID = ?", input.LitematicaID).Find(&Litematicas)
+		}
+		for i := range Litematicas {
+			for j := range Litematicas[i].Creators {
+				Litematicas[i].Creators[j].Password = ""
+			}
 		}
 		resp.Body.Litematicas = append(resp.Body.Litematicas, Litematicas...)
 
@@ -40,6 +48,7 @@ func Litematica(api huma.API) {
 		OperationID: "postlitematica",
 		Method:      "POST",
 		Path:        "/litematica",
+		Middlewares: huma.Middlewares{middleware.ParseToken(api)},
 	}, func(ctx context.Context, input *struct {
 		Name        string `header:"Name" example:"litematica" doc:"Name"`
 		Version     string `header:"Version" example:"1.0" doc:"Version"`
@@ -55,41 +64,57 @@ func Litematica(api huma.API) {
 		file := input.RawBody.File["litematica"][0]
 		filedata, err := file.Open()
 		if err != nil {
-			resp.Body.Message = "Failed"
-			return resp, nil
+			resp.Body.Message = "Failed in opening file"
+			log.Println(err)
+			return resp, err
 		}
 		_, err = global.S3Client.UploadFile("litematica", file.Filename, filedata)
 		if err != nil {
-			resp.Body.Message = "Failed"
-			return resp, nil
+			if err.Error() == "The resource already exists" {
+				resp.Body.Message = "File already exists"
+				return resp, nil
+			}
+			resp.Body.Message = "Failed in uploading file"
+			log.Println(err)
+			return resp, err
 		}
 		url := global.S3Client.GetPublicUrl("litematica", file.Filename)
+
+		objfile := &model.LitematicaObj{}
+		global.DBEngine.Create(objfile)
 
 		litematica := &model.Litematica{
 			LitematicaName: input.Name,
 			Version:        input.Version,
 			Description:    input.Description,
 			Tags:           input.Tags,
+			Creators:       []*model.User{},
 			Files: []model.LitematicaFile{
 				{
-					Size:        int(file.Size),
-					Description: "litematica",
-					FileName:    file.Filename,
-					FilePath:    url.SignedURL,
-					ReleaseDate: global.DBEngine.NowFunc(),
+					Size:            int(file.Size),
+					Description:     input.Description,
+					FileName:        file.Filename,
+					FilePath:        url.SignedURL,
+					ReleaseDate:     global.DBEngine.NowFunc(),
+					LitematicaObjID: objfile.ID,
 				},
 			},
 		}
+		me := &model.User{}
+		global.DBEngine.Model(&model.User{}).Where("ID = ?", ctx.Value("userid")).First(me)
+		litematica.Creators = append(litematica.Creators, me)
 
-		if input.GroupID == -1 {
-			litematica.GroupID = input.GroupID
+		if input.GroupID != -1 {
+			litematica.GroupID = uint(input.GroupID)
 		}
 
-		if input.ServerID == -1 {
-			litematica.ServerID = input.ServerID
+		if input.ServerID != -1 {
+			litematica.ServerID = uint(input.ServerID)
 		}
 
 		global.DBEngine.Create(litematica)
+
+		global.DBEngine.Model(litematica).Association("Creators").Replace(litematica.Creators)
 		resp.Body.Message = "Success"
 		return resp, nil
 	})
@@ -98,6 +123,7 @@ func Litematica(api huma.API) {
 		OperationID: "editlitematica",
 		Method:      "PATCH",
 		Path:        "/litematica",
+		Middlewares: huma.Middlewares{middleware.ParseToken(api)},
 	}, func(ctx context.Context, input *struct {
 		LitematicaID   int    `header:"LitematicaID" example:"1" doc:"LitematicaID"`
 		LitematicaName string `header:"LitematicaName" example:"litematica" doc:"LitematicaName"`
@@ -118,6 +144,33 @@ func Litematica(api huma.API) {
 				"GroupID":        input.GroupID,
 				"ServerID":       input.ServerID,
 			})
+		resp.Body.Message = "Success"
+		return resp, nil
+	})
+
+	huma.Register(api, huma.Operation{
+		OperationID: "deletelitematica",
+		Method:      "DELETE",
+		Path:        "/litematica",
+	}, func(ctx context.Context, input *struct {
+		LitematicaID int `header:"LitematicaID" example:"1" doc:"LitematicaID"`
+	}) (*NormalOutput, error) {
+		resp := &NormalOutput{}
+
+		litematica := model.Litematica{Model: gorm.Model{ID: uint(input.LitematicaID)}}
+
+		global.DBEngine.Preload("Files").Find(&litematica)
+
+		for _, file := range litematica.Files {
+			global.DBEngine.Delete(&file)
+		}
+		// for _, Image := range litematica.Images {
+		// 	global.DBEngine.Delete(&Image)
+		// }
+
+		global.DBEngine.Model(&litematica).Association("Creators").Clear()
+		global.DBEngine.Delete(&litematica)
+
 		resp.Body.Message = "Success"
 		return resp, nil
 	})

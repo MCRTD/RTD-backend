@@ -146,7 +146,6 @@ func User(api huma.API) {
 		Description string `header:"Description" example:"hello how are you" doc:"user description."`
 	}) (*NormalOutput, error) {
 		resp := &NormalOutput{}
-		fmt.Println(ctx.Value("userid"))
 		result := global.DBEngine.Model(&model.User{}).Where("ID = ?", ctx.Value("userid")).Updates(map[string]interface{}{
 			"Username":    input.Username,
 			"Email":       input.Email,

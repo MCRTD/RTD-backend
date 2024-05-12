@@ -7,7 +7,7 @@ import (
 )
 
 func NewS3Client() *storage_go.Client {
-	endpoint := "swomajagzechqsnrpefx.supabase.co/storage/v1"
+	endpoint := os.Getenv("Supabaseurl")
 	storageClient := storage_go.NewClient(endpoint, os.Getenv("Supabasekey"), nil)
 	return storageClient
 }

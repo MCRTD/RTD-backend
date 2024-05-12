@@ -37,16 +37,16 @@ type User struct {
 type Comment struct {
 	gorm.Model
 	Context      string `gorm:"not null"`
-	UserID       int    `gorm:"not null"`
+	UserID       uint   `gorm:"not null"`
 	User         User   `gorm:"foreignKey:UserID"`
-	LitematicaID int    `gorm:"not null"`
+	LitematicaID uint   `gorm:"not null"`
 }
 
 type Image struct {
 	gorm.Model
 	ImageName    string `gorm:"not null"`
 	ImagePath    string `gorm:"not null"`
-	LitematicaID int    `gorm:"not null"`
+	LitematicaID uint   `gorm:"not null"`
 }
 
 type LitematicaObj struct {
@@ -64,7 +64,7 @@ type LitematicaFile struct {
 	DownloadCount   int           `gorm:"not null default:0"`
 	ReleaseDate     time.Time     `gorm:"not null"`
 	LitematicaID    int           `gorm:"not null"`
-	LitematicaObjID int           `gorm:"default:null"`
+	LitematicaObjID uint          `gorm:"not null"`
 	LitematicaObj   LitematicaObj `gorm:"foreignKey:LitematicaObjID"`
 }
 
@@ -75,9 +75,9 @@ type Litematica struct {
 	Description    string  `gorm:"not null"`
 	Tags           string  `gorm:"not null"`
 	Vote           int     `gorm:"not null Default:0"`
-	GroupID        int     `gorm:"default:null"`
+	GroupID        uint    `gorm:"default:null"`
 	Group          Group   `gorm:"foreignKey:GroupID"`
-	ServerID       int     `gorm:"default:null"`
+	ServerID       uint    `gorm:"default:null"`
 	Server         Server  `gorm:"foreignKey:ServerID"`
 	Creators       []*User `gorm:"many2many:litematica_creators;"`
 	Images         []Image
@@ -90,7 +90,7 @@ type Group struct {
 	GroupName   string  `gorm:"not null"`
 	Description string  `gorm:"not null"`
 	Avatar      string  `gorm:"not null"`
-	SocialID    int     `gorm:"not null"`
+	SocialID    uint    `gorm:"not null"`
 	Social      Social  `gorm:"foreignKey:SocialID"`
 	Users       []*User `gorm:"many2many:user_groups;"`
 }
@@ -100,7 +100,7 @@ type Server struct {
 	ServerName  string  `gorm:"not null"`
 	Description string  `gorm:"not null"`
 	Avatar      string  `gorm:"not null"`
-	SocialID    int     `gorm:"not null"`
+	SocialID    uint    `gorm:"not null"`
 	Social      Social  `gorm:"foreignKey:SocialID"`
 	Users       []*User `gorm:"many2many:user_servers;"`
 }
