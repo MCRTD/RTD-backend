@@ -2,6 +2,7 @@ package routes
 
 import (
 	"RTD-backend/global"
+	"RTD-backend/lapi"
 	"RTD-backend/middleware"
 	"RTD-backend/model"
 	"context"
@@ -204,6 +205,26 @@ func Litematica(api huma.API) {
 			FilePath:     url.SignedURL,
 		}
 		global.DBEngine.Create(litematicaFile)
+
+		resp.Body.Message = "Success"
+		return resp, nil
+	})
+
+	huma.Register(api, huma.Operation{
+		OperationID: "makelitematicaobj",
+		Method:      "POST",
+		Path:        "/litematica/obj",
+	}, func(ctx context.Context, input *struct {
+		FileID     int    `header:"FileID" example:"1" doc:"FileID"`
+		Texurepack string `header:"Texurepack" example:"1" doc:"Texurepack"`
+	}) (*NormalOutput, error) {
+		resp := &NormalOutput{}
+		file := model.LitematicaFile{}
+		global.DBEngine.Model(&model.LitematicaFile{}).Where("ID = ?", input.FileID).Find(&file)
+
+		go func() {
+			lapi.MakeOBJ(file.FilePath, input.Texurepack, file.FileName, input.FileID)
+		}()
 
 		resp.Body.Message = "Success"
 		return resp, nil

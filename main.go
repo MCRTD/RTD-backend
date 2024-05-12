@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"RTD-backend/global"
+	"RTD-backend/middleware"
 	"RTD-backend/model"
 	"RTD-backend/routes"
 	"RTD-backend/setting"
@@ -41,7 +42,9 @@ func main() {
 	group := router.Group("/api")
 	config := huma.DefaultConfig("My API", "1.0.0")
 	config.Servers = []*huma.Server{{URL: "http://localhost:8888/api"}}
+
 	api := humagin.NewWithGroup(router, group, config)
+	api.UseMiddleware(middleware.ReflashHandler)
 	routes.Helloworld(api)
 	routes.User(api)
 	routes.Node(api)

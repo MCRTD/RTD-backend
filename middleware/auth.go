@@ -77,6 +77,35 @@ func ReflashToken(reflashTokenString string) (string, error) {
 	return tokenString, nil
 }
 
+func ReflashHandler(ctx huma.Context, next func(huma.Context)) {
+	tokenString, err := huma.ReadCookie(ctx, "token")
+	if err != nil {
+		next(ctx)
+	}
+	_, parseErr := jwt.Parse(tokenString.Value, func(token *jwt.Token) (interface{}, error) {
+		return secretKey, nil
+	})
+	if parseErr != nil && parseErr.Error() != "token has invalid claims: token is expired" {
+		next(ctx)
+		return
+	}
+	reflashTokenString, err := huma.ReadCookie(ctx, "reflashtoken")
+	if err != nil {
+		next(ctx)
+		return
+	}
+	token, err := ReflashToken(reflashTokenString.Value)
+	if err != nil {
+		return
+	}
+	cookie := http.Cookie{
+		Name:  "token",
+		Value: token,
+	}
+	ctx.AppendHeader("Set-Cookie", cookie.String())
+	next(ctx)
+}
+
 func ParseToken(api huma.API) func(ctx huma.Context, next func(huma.Context)) {
 
 	return func(ctx huma.Context, next func(huma.Context)) {
