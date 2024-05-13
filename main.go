@@ -46,6 +46,7 @@ func main() {
 	config.Servers = []*huma.Server{{URL: "http://localhost:8888/api"}}
 
 	api := humagin.NewWithGroup(router, group, config)
+	// api.UseMiddleware(middleware.Corsfunc)
 	api.UseMiddleware(middleware.ReflashHandler)
 	routes.Helloworld(api)
 	routes.User(api)

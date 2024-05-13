@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -86,7 +87,11 @@ func ReflashHandler(ctx huma.Context, next func(huma.Context)) {
 	_, parseErr := jwt.Parse(tokenString.Value, func(token *jwt.Token) (interface{}, error) {
 		return secretKey, nil
 	})
-	if parseErr != nil && parseErr.Error() != "token has invalid claims: token is expired" {
+	if parseErr == nil {
+		next(ctx)
+		return
+	}
+	if parseErr.Error() != "token has invalid claims: token is expired" {
 		next(ctx)
 		return
 	}
@@ -104,6 +109,7 @@ func ReflashHandler(ctx huma.Context, next func(huma.Context)) {
 		Path:  "/",
 		Value: token,
 	}
+	fmt.Println("reflash token")
 	ctx.AppendHeader("Set-Cookie", cookie.String())
 	next(ctx)
 }

@@ -6,6 +6,7 @@ import (
 	"RTD-backend/middleware"
 	"RTD-backend/model"
 	"context"
+	"fmt"
 	"log"
 	"mime/multipart"
 
@@ -61,19 +62,26 @@ func Litematica(api huma.API) {
 	}) (*NormalOutput, error) {
 
 		resp := &NormalOutput{}
+		fmt.Println(input)
 
 		file := input.RawBody.File["litematica"][0]
+
+		if file == nil {
+			resp.Body.Message = "File is empty"
+			return resp, huma.NewError(400, "File is empty")
+		}
 		filedata, err := file.Open()
 		if err != nil {
 			resp.Body.Message = "Failed in opening file"
 			log.Println(err)
 			return resp, err
 		}
+
 		_, err = global.S3Client.UploadFile("litematica", file.Filename, filedata)
 		if err != nil {
 			if err.Error() == "The resource already exists" {
 				resp.Body.Message = "File already exists"
-				return resp, nil
+				return resp, huma.NewError(400, "File already exists")
 			}
 			resp.Body.Message = "Failed in uploading file"
 			log.Println(err)
@@ -83,6 +91,11 @@ func Litematica(api huma.API) {
 
 		objfile := &model.LitematicaObj{}
 		global.DBEngine.Create(objfile)
+
+		if input.Name == "" {
+			resp.Body.Message = "Name is empty"
+			return resp, huma.NewError(400, "Name is empty")
+		}
 
 		litematica := &model.Litematica{
 			LitematicaName: input.Name,
