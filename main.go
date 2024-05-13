@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
 
@@ -51,15 +52,14 @@ func main() {
 	routes.Node(api)
 	routes.Litematica(api)
 
-  port := os.Getenv("PORT")
-  if port == "" {
-     port = "8080"
-  }
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8888"
+	}
 
-	log.Println("Server started on http://127.0.0.1:"+port)
-	log.Println("Docs  http://127.0.0.1:"+port+"/api/docs")
-  
-	http.ListenAndServe("127.0.0.1:"+port, router)
+	log.Println("Server started on http://127.0.0.1:" + port)
+	log.Println("Docs  http://127.0.0.1:" + port + "/api/docs")
+	http.ListenAndServe(":"+port, router)
 }
 
 func Syncddb() {
