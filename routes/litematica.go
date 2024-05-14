@@ -26,7 +26,7 @@ func Litematica(api huma.API) {
 		Method:      "GET",
 		Path:        "/litematica",
 	}, func(ctx context.Context, input *struct {
-		LitematicaID string `header:"LitematicaID" example:"1" doc:"LitematicaID"`
+		LitematicaID string `query:"LitematicaID" example:"1" doc:"LitematicaID"`
 	}) (*LitematicaOutput, error) {
 		resp := &LitematicaOutput{}
 		var Litematicas []model.Litematica
