@@ -40,7 +40,7 @@ func User(api huma.API) {
 		Method:      "GET",
 		Path:        "/user",
 	}, func(ctx context.Context, input *struct {
-		User string `header:"user" example:"user" doc:"Username."`
+		User string `query:"user" example:"user" doc:"Username."`
 	}) (*UserOutput, error) {
 		if input.User == "" {
 			resp := []*model.User{}
@@ -58,7 +58,7 @@ func User(api huma.API) {
 		} else {
 			resp := &model.User{}
 			resp.Password = ""
-			res := global.DBEngine.Preload("Litematicas").Preload("Groups").Preload("Servers").Model(&model.User{}).Where("username = ?", input.User).First(&resp)
+			res := global.DBEngine.Preload("Litematicas").Preload("Groups").Preload("Servers").Model(&model.User{}).Where("ID = ?", input.User).First(&resp)
 			if errors.Is(res.Error, gorm.ErrRecordNotFound) {
 				return nil, res.Error
 			}
