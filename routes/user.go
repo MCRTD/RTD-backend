@@ -57,11 +57,11 @@ func User(api huma.API) {
 
 		} else {
 			resp := &model.User{}
-			resp.Password = ""
 			res := global.DBEngine.Preload("Litematicas").Preload("Groups").Preload("Servers").Model(&model.User{}).Where("ID = ?", input.User).First(&resp)
 			if errors.Is(res.Error, gorm.ErrRecordNotFound) {
 				return nil, res.Error
 			}
+			resp.Password = ""
 			output := &UserOutput{}
 			output.Body.Users = append(output.Body.Users, *resp)
 			return output, nil
