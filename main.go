@@ -39,7 +39,12 @@ func init() {
 func main() {
 	router := gin.Default()
 
-	router.Use(cors.Default())
+	corsconfig := cors.DefaultConfig()
+	corsconfig.AllowCredentials = true
+	corsconfig.AllowOrigins = []string{"http://localhost:5173"}
+	router.Use(cors.New(
+		corsconfig,
+	))
 
 	group := router.Group("/api")
 	config := huma.DefaultConfig("My API", "1.0.0")

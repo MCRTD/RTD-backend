@@ -34,6 +34,16 @@ type UserOutput struct {
 	}
 }
 
+type EditUser struct {
+	Username    string `example:"user" doc:"Username."`
+	Email       string `example:"wow@gmail" doc:"Email."`
+	Description string `example:"hello how are you" doc:"user description."`
+}
+
+type EditUserPassword struct {
+	Password string `example:"password" doc:"Password."`
+}
+
 func User(api huma.API) {
 	huma.Register(api, huma.Operation{
 		OperationID: "getuser",
@@ -141,15 +151,13 @@ func User(api huma.API) {
 		Path:        "/user",
 		Middlewares: huma.Middlewares{middleware.ParseToken(api)},
 	}, func(ctx context.Context, input *struct {
-		Username    string `header:"username" example:"user" doc:"Username." required:"true"`
-		Email       string `header:"email" example:"wow@gmail" doc:"Email."`
-		Description string `header:"Description" example:"hello how are you" doc:"user description."`
+		Body EditUser
 	}) (*NormalOutput, error) {
 		resp := &NormalOutput{}
 		result := global.DBEngine.Model(&model.User{}).Where("ID = ?", ctx.Value("userid")).Updates(map[string]interface{}{
-			"Username":    input.Username,
-			"Email":       input.Email,
-			"Description": input.Description,
+			"Username":    input.Body.Username,
+			"Email":       input.Body.Email,
+			"Description": input.Body.Description,
 		})
 		if result.Error != nil {
 			fmt.Println("Failed to update user:", result.Error)
@@ -158,6 +166,27 @@ func User(api huma.API) {
 		}
 		resp.Body.Message = "Edit success!"
 
+		return resp, nil
+	})
+
+	huma.Register(api, huma.Operation{
+		OperationID: "edituserpassword",
+		Method:      "PATCH",
+		Path:        "/user/password",
+		Middlewares: huma.Middlewares{middleware.ParseToken(api)},
+	}, func(ctx context.Context, input *struct {
+		Body EditUserPassword
+	}) (*NormalOutput, error) {
+		resp := &NormalOutput{}
+		result := global.DBEngine.Model(&model.User{}).Where("ID = ?", ctx.Value("userid")).Updates(map[string]interface{}{
+			"Password": input.Body.Password,
+		})
+		if result.Error != nil {
+			fmt.Println("Failed to update user password:", result.Error)
+			resp.Body.Message = "Edit failed!"
+			return resp, result.Error
+		}
+		resp.Body.Message = "Edit success!"
 		return resp, nil
 	})
 }
