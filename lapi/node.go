@@ -17,6 +17,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/google/uuid"
+
 	storage_go "github.com/supabase-community/storage-go"
 )
 
@@ -35,8 +37,8 @@ func UploadTexturePackToNode(texturepack string, file io.Reader) error {
 		log.Print("No server available")
 		return nil
 	}
-
-	dir, err := os.MkdirTemp("", "texturepack")
+	diruuid := uuid.New()
+	dir, err := os.MkdirTemp("", "texturepack"+diruuid.String())
 	if err != nil {
 		log.Println(err)
 		return err
@@ -252,6 +254,44 @@ func MakeOBJ(url string, texturepack string, name string, id int) NodeOBJMessage
 		}
 	} else {
 		return NodeOBJMessage{Message: "No response received"}
+	}
+
+	diruuid := uuid.New()
+	dir, err := os.MkdirTemp("", "litematicaobj"+diruuid.String())
+	if err != nil {
+		log.Println(err)
+		return NodeOBJMessage{Message: "Error creating temp directory"}
+	}
+	defer os.RemoveAll(dir)
+
+	buff := bytes.NewBuffer([]byte{})
+	size, err := io.Copy(buff, resp.Body)
+	if err != nil {
+		log.Println(err)
+		return NodeOBJMessage{Message: "Error copying response"}
+	}
+	reader := bytes.NewReader(buff.Bytes())
+	zipReader, err := zip.NewReader(reader, size)
+
+	// 將.mtl與.obj檔案上傳至S3
+
+	for _, f := range zipReader.File {
+		filePath := filepath.Join(dir, f.Name)
+		fmt.Println("unzipping file ", filePath)
+
+		if strings.HasSuffix(f.Name, ".mtl") || strings.HasSuffix(f.Name, ".obj") {
+			fileInArchive, err := f.Open()
+			if err != nil {
+				log.Println("Error opening file:", err)
+				return NodeOBJMessage{Message: "Error opening file"}
+			}
+			defer fileInArchive.Close()
+			_, fileerr := global.S3Client.UploadFile("obj", name+".obj", fileInArchive, storage_go.FileOptions{})
+			if fileerr != nil {
+				log.Println("Error uploading file:", fileerr)
+				return NodeOBJMessage{Message: "Error uploading file"}
+			}
+		}
 	}
 
 	contentType := "application/zip"

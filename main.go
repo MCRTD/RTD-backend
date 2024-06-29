@@ -115,6 +115,15 @@ func SetupDB() error {
 			return err
 		}
 	}
+	_, error = global.S3Client.GetBucket("obj")
+	if error != nil {
+		_, err := global.S3Client.CreateBucket("obj", storage_go.BucketOptions{
+			Public: true,
+		})
+		if err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
