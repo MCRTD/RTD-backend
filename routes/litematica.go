@@ -92,6 +92,11 @@ func Litematica(api huma.API) {
 		objfile := &model.LitematicaObj{}
 		global.DBEngine.Create(objfile)
 
+		if objfile.ID == 0 {
+			resp.Body.Message = "Failed in creating objfile"
+			return resp, huma.NewError(400, "Failed in creating objfile")
+		}
+
 		if input.Name == "" {
 			resp.Body.Message = "Name is empty"
 			return resp, huma.NewError(400, "Name is empty")
@@ -234,6 +239,11 @@ func Litematica(api huma.API) {
 		resp := &NormalOutput{}
 		file := model.LitematicaFile{}
 		global.DBEngine.Model(&model.LitematicaFile{}).Where("ID = ?", input.FileID).Find(&file)
+
+		if file.ID == 0 {
+			resp.Body.Message = "File not found"
+			return nil, huma.NewError(400, "File not found")
+		}
 
 		go func() {
 			lapi.MakeOBJ(file.FilePath, input.Texurepack, file.FileName, input.FileID)

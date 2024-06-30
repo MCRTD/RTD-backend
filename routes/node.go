@@ -142,7 +142,7 @@ func Node(api huma.API) {
 	})
 
 	huma.Register(api, huma.Operation{
-		OperationID: "getnodetexturepack",
+		OperationID: "addnodetexturepack",
 		Method:      "POST",
 		Path:        "/node/texturepack",
 	}, func(ctx context.Context, input *struct {

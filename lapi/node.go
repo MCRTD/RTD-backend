@@ -286,26 +286,58 @@ func MakeOBJ(url string, texturepack string, name string, id int) NodeOBJMessage
 				return NodeOBJMessage{Message: "Error opening file"}
 			}
 			defer fileInArchive.Close()
-			_, fileerr := global.S3Client.UploadFile("obj", name+".obj", fileInArchive, storage_go.FileOptions{})
-			if fileerr != nil {
-				log.Println("Error uploading file:", fileerr)
-				return NodeOBJMessage{Message: "Error uploading file"}
+			upsert := true
+			contenttype := "text/plain"
+			if strings.HasSuffix(f.Name, ".mtl") {
+				_, fileerr := global.S3Client.UploadFile("obj", name+".mtl", fileInArchive, storage_go.FileOptions{
+					ContentType: &contenttype,
+					Upsert:      &upsert,
+				})
+				if fileerr != nil {
+					log.Println("Error uploading file:", fileerr)
+					return NodeOBJMessage{Message: "Error uploading file"}
+				}
+			} else {
+				_, fileerr := global.S3Client.UploadFile("obj", name+".obj", fileInArchive, storage_go.FileOptions{
+					ContentType: &contenttype,
+					Upsert:      &upsert,
+				})
+				if fileerr != nil {
+					log.Println("Error uploading file:", fileerr)
+					return NodeOBJMessage{Message: "Error uploading file"}
+				}
 			}
 		}
 	}
 
-	contentType := "application/zip"
-	_, fileerr := global.S3Client.UploadFile("litematica", name+".zip", resp.Body, storage_go.FileOptions{
-		ContentType: &contentType,
-	})
-	if fileerr != nil {
-		log.Println(fileerr)
-		return NodeOBJMessage{Message: "Error uploading file"}
+	bodyBytes := buff.Bytes()
+	if err != nil {
+		log.Fatalf("Failed to read response body: %v", err)
+	}
+
+	if len(bodyBytes) == 0 {
+		log.Println("Warning: The file to upload is empty.")
+	} else {
+		newBody := io.NopCloser(bytes.NewBuffer(bodyBytes))
+
+		contentType := "application/zip"
+		upsert := true
+		_, fileerr := global.S3Client.UploadFile("litematica", name+".zip", newBody, storage_go.FileOptions{
+			ContentType: &contentType,
+			Upsert:      &upsert,
+		})
+		if fileerr != nil {
+			log.Println(fileerr)
+			return NodeOBJMessage{Message: "Error uploading file"}
+		}
 	}
 
 	resp.Body.Close()
 
-	global.DBEngine.Model(&model.LitematicaFile{}).Where("ID = ?", id).Update("LitematicaObj", &model.LitematicaObj{ZipFilePath: global.S3Client.GetPublicUrl("litematica", name+".zip").SignedURL})
+	global.DBEngine.Model(&model.LitematicaFile{}).Where("ID = ?", id).Update("LitematicaObj", &model.LitematicaObj{
+		ObjFilePath: global.S3Client.GetPublicUrl("obj", name+".obj").SignedURL,
+		MtlFilePath: global.S3Client.GetPublicUrl("obj", name+".mtl").SignedURL,
+		ZipFilePath: global.S3Client.GetPublicUrl("litematica", name+".zip").SignedURL})
 
 	return NodeOBJMessage{Message: "Success"}
 }

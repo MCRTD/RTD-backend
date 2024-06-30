@@ -51,8 +51,9 @@ type Image struct {
 
 type LitematicaObj struct {
 	gorm.Model
-	FilePath    string `gorm:"not null"`
-	ZipFilePath string `gorm:"not null"`
+	ObjFilePath string
+	MtlFilePath string
+	ZipFilePath string
 }
 
 type LitematicaFile struct {
