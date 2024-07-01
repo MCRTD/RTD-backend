@@ -133,8 +133,9 @@ func UploadTexturePackToNode(texturepack string, file io.Reader) error {
 			defer wg.Done()
 			defer func() { <-sem }()
 
-			relPath = strings.TrimPrefix(relPath, "assets\\minecraft\\textures\\")
-			relPath = strings.Replace(filepath.Join(texturepack, relPath), "\\", "/", -1)
+			// relPath = strings.TrimPrefix(relPath, "assets\\minecraft\\textures\\")
+			/// texturepack/材質包名稱/textures/檔案名稱
+			relPath = strings.Replace(filepath.Join(texturepack, "textures", filepath.Base(relPath)), "\\", "/", -1)
 			contentType := http.DetectContentType(fileData)
 			filesetting := storage_go.FileOptions{
 				ContentType: &contentType,
@@ -145,6 +146,7 @@ func UploadTexturePackToNode(texturepack string, file io.Reader) error {
 				log.Printf("上傳文件時遇到錯誤: %v", err)
 				return
 			}
+			log.Printf("上傳文件成功: %s", relPath)
 		}(path, relPath, fileData)
 
 		return nil
