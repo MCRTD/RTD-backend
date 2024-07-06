@@ -41,7 +41,7 @@ func main() {
 
 	corsconfig := cors.DefaultConfig()
 	corsconfig.AllowCredentials = true
-	corsconfig.AllowOrigins = []string{"http://localhost:5173", "http://localhost:8888", "https://rtdweb.zeabur.app"}
+	corsconfig.AllowOrigins = []string{"http://localhost:5173", "http://localhost:8888", "https://rtdweb.zeabur.app", "https://mcrtd.whitecloud.life"}
 	router.Use(cors.New(
 		corsconfig,
 	))
