@@ -24,6 +24,7 @@ type User struct {
 	DiscordID     *int          `gorm:"default:null"`
 	Description   string        `gorm:"default:null"`
 	Avatar        string        `gorm:"default:null"`
+	AvatarPath    string        `gorm:"default:null"`
 	JoinedTime    time.Time     `gorm:"not null"`
 	LasttimeLogin time.Time     `gorm:"not null"`
 	Admin         bool          `gorm:"not null default:false"`

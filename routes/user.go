@@ -4,13 +4,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"mime/multipart"
 	"net/http"
+	"strings"
 
 	"RTD-backend/global"
 	"RTD-backend/middleware"
 	"RTD-backend/model"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/google/uuid"
+	storage_go "github.com/supabase-community/storage-go"
 	"gorm.io/gorm"
 )
 
@@ -189,4 +194,95 @@ func User(api huma.API) {
 		resp.Body.Message = "Edit success!"
 		return resp, nil
 	})
+
+	huma.Register(api, huma.Operation{
+		OperationID: "adduseravatar",
+		Method:      "POST",
+		Path:        "/user/avatar",
+		Middlewares: huma.Middlewares{middleware.ParseToken(api)},
+	}, func(ctx context.Context, input *struct {
+		RawBody multipart.Form
+	}) (*NormalOutput, error) {
+		resp := &NormalOutput{}
+		user := &model.User{}
+		global.DBEngine.Model(&model.User{}).Where("ID = ?", ctx.Value("userid")).First(&user)
+		if user.Avatar != "" {
+			global.S3Client.RemoveFile("images", []string{user.AvatarPath})
+		}
+		file := input.RawBody.File["avatar"][0]
+		filedata, err := file.Open()
+		if err != nil {
+			resp.Body.Message = "Failed"
+			return resp, huma.Error400BadRequest("Failed to open file")
+		}
+		if file.Size > 1024*1024*10 {
+			resp.Body.Message = "Failed"
+			return resp, huma.NewError(413, "File is too large")
+		}
+		parts := strings.Split(file.Filename, ".")
+		newfilename := uuid.New().String() + "." + parts[len(parts)-1]
+		// 讀取文件的前512個字節來檢測內容類型
+		buffer := make([]byte, 512)
+		_, err = filedata.Read(buffer)
+		if err != nil {
+			fmt.Println("Failed to read file:", err)
+			resp.Body.Message = "Failed"
+			return resp, err
+		}
+		_, err = filedata.Seek(0, io.SeekStart)
+		if err != nil {
+			fmt.Println("Failed to seek file:", err)
+			resp.Body.Message = "Failed"
+			return resp, err
+		}
+		filetype := http.DetectContentType(buffer)
+		global.S3Client.UploadFile("images", newfilename, filedata, storage_go.FileOptions{
+			ContentType: &filetype,
+		})
+		url := global.S3Client.GetPublicUrl("images", newfilename)
+		result := global.DBEngine.Model(&model.User{}).Where("ID = ?", ctx.Value("userid")).Updates(map[string]interface{}{
+			"Avatar":     url.SignedURL,
+			"AvatarPath": newfilename,
+		})
+		if result.Error != nil {
+			fmt.Println("Failed to update user avatar:", result.Error)
+			resp.Body.Message = "Edit failed!"
+			return resp, result.Error
+		}
+		resp.Body.Message = "Edit success!"
+		return resp, nil
+	})
+
+	// huma.Register(api, huma.Operation{
+	// 	OperationID: "deleteuseravatar",
+	// 	Method:      "DELETE",
+	// 	Path:        "/user/avatar",
+	// 	Middlewares: huma.Middlewares{middleware.ParseToken(api)},
+	// }, func(ctx context.Context, input *struct {
+	// }) (*NormalOutput, error) {
+	// 	resp := &NormalOutput{}
+	// 	user := &model.User{}
+	// 	result := global.DBEngine.Model(&model.User{}).Where("ID = ?", ctx.Value("userid")).First(&user)
+	// 	if result.Error != nil {
+	// 		fmt.Println("Failed to find user:", result.Error)
+	// 		resp.Body.Message = "Delete failed!"
+	// 		return resp, result.Error
+	// 	}
+	// 	if user.Avatar == "" {
+	// 		resp.Body.Message = "Delete failed!"
+	// 		return resp, huma.Error400BadRequest("User has no avatar")
+	// 	}
+	// 	global.S3Client.RemoveFile("images", []string{user.AvatarPath})
+	// 	result = global.DBEngine.Model(&model.User{}).Where("ID = ?", ctx.Value("userid")).Updates(map[string]interface{}{
+	// 		"Avatar":     "",
+	// 		"AvatarPath": "",
+	// 	})
+	// 	if result.Error != nil {
+	// 		fmt.Println("Failed to delete user avatar:", result.Error)
+	// 		resp.Body.Message = "Delete failed!"
+	// 		return resp, result.Error
+	// 	}
+	// 	resp.Body.Message = "Delete success!"
+	// 	return resp, nil
+	// })
 }
