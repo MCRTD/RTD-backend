@@ -106,6 +106,16 @@ func SetupDB() error {
 			return err
 		}
 	}
+
+	_, error = global.S3Client.GetBucket("images")
+	if error != nil {
+		_, err := global.S3Client.CreateBucket("images", storage_go.BucketOptions{
+			Public: true,
+		})
+		if err != nil {
+			return err
+		}
+	}
 	_, error = global.S3Client.GetBucket("texturepack")
 	if error != nil {
 		_, err := global.S3Client.CreateBucket("texturepack", storage_go.BucketOptions{

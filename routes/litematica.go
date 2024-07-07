@@ -9,6 +9,9 @@ import (
 	"fmt"
 	"log"
 	"mime/multipart"
+	"strings"
+
+	"github.com/google/uuid"
 
 	"github.com/danielgtaylor/huma/v2"
 	"gorm.io/gorm"
@@ -189,6 +192,63 @@ func Litematica(api huma.API) {
 
 		global.DBEngine.Model(&litematica).Association("Creators").Clear()
 		global.DBEngine.Delete(&litematica)
+
+		resp.Body.Message = "Success"
+		return resp, nil
+	})
+
+	huma.Register(api, huma.Operation{
+		OperationID: "addlitematicaimage",
+		Method:      "POST",
+		Path:        "/litematica/image",
+	}, func(ctx context.Context, input *struct {
+		LitematicaID uint `header:"LitematicaID" example:"1" doc:"LitematicaID"`
+		RawBody      multipart.Form
+	}) (*NormalOutput, error) {
+		resp := &NormalOutput{}
+
+		files := input.RawBody.File["image"]
+		for _, file := range files {
+			if file.Size > 1024*1024*35 {
+				resp.Body.Message = "File is too large"
+				return resp, huma.NewError(413, "File is too large")
+			}
+		}
+		for _, file := range files {
+			filedata, err := file.Open()
+			if err != nil {
+				resp.Body.Message = "Failed"
+				return resp, huma.Error400BadRequest("Failed")
+			}
+			parts := strings.Split(file.Filename, ".")
+			newfilename := uuid.New().String() + "." + parts[len(parts)-1]
+			_, err = global.S3Client.UploadFile("images", newfilename, filedata)
+			if err != nil {
+				resp.Body.Message = "Failed"
+				return resp, huma.Error400BadRequest("Failed")
+			}
+			url := global.S3Client.GetPublicUrl("images", newfilename)
+			litematicaImage := &model.Image{
+				LitematicaID: input.LitematicaID,
+				ImageName:    newfilename,
+				ImagePath:    url.SignedURL,
+			}
+			global.DBEngine.Create(litematicaImage)
+		}
+		resp.Body.Message = "Success"
+		return resp, nil
+	})
+
+	huma.Register(api, huma.Operation{
+		OperationID: "deletelitematicaimage",
+		Method:      "DELETE",
+		Path:        "/litematica/image",
+	}, func(ctx context.Context, input *struct {
+		ImageID uint `header:"ImageID" example:"1" doc:"ImageID"`
+	}) (*NormalOutput, error) {
+		resp := &NormalOutput{}
+
+		global.DBEngine.Delete(&model.Image{Model: gorm.Model{ID: input.ImageID}})
 
 		resp.Body.Message = "Success"
 		return resp, nil
