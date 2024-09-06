@@ -23,6 +23,15 @@ type LitematicaOutput struct {
 	}
 }
 
+type PostObj struct {
+	FileID     int    `json:"FileID"`
+	Texurepack string `json:"Texurepack"`
+}
+
+type LitematicaID struct {
+	LitematicaID int `json:"LitematicaID"`
+}
+
 func Litematica(api huma.API) {
 	huma.Register(api, huma.Operation{
 		OperationID: "getlitematica",
@@ -175,11 +184,11 @@ func Litematica(api huma.API) {
 		Method:      "DELETE",
 		Path:        "/litematica",
 	}, func(ctx context.Context, input *struct {
-		LitematicaID int `header:"LitematicaID" example:"1" doc:"LitematicaID"`
+		Body LitematicaID
 	}) (*NormalOutput, error) {
 		resp := &NormalOutput{}
 
-		litematica := model.Litematica{Model: gorm.Model{ID: uint(input.LitematicaID)}}
+		litematica := model.Litematica{Model: gorm.Model{ID: uint(input.Body.LitematicaID)}}
 
 		global.DBEngine.Preload("Files").Find(&litematica)
 
@@ -202,8 +211,8 @@ func Litematica(api huma.API) {
 		Method:      "POST",
 		Path:        "/litematica/image",
 	}, func(ctx context.Context, input *struct {
-		LitematicaID uint `header:"LitematicaID" example:"1" doc:"LitematicaID"`
-		RawBody      multipart.Form
+		Body    LitematicaID
+		RawBody multipart.Form
 	}) (*NormalOutput, error) {
 		resp := &NormalOutput{}
 
@@ -229,7 +238,7 @@ func Litematica(api huma.API) {
 			}
 			url := global.S3Client.GetPublicUrl("images", newfilename)
 			litematicaImage := &model.Image{
-				LitematicaID: input.LitematicaID,
+				LitematicaID: uint(input.Body.LitematicaID),
 				ImageName:    newfilename,
 				ImagePath:    url.SignedURL,
 			}
@@ -259,8 +268,8 @@ func Litematica(api huma.API) {
 		Method:      "POST",
 		Path:        "/litematica/file",
 	}, func(ctx context.Context, input *struct {
-		LitematicaID int `header:"LitematicaID" example:"1" doc:"LitematicaID"`
-		RawBody      multipart.Form
+		Body    LitematicaID
+		RawBody multipart.Form
 	}) (*NormalOutput, error) {
 		resp := &NormalOutput{}
 
@@ -278,7 +287,7 @@ func Litematica(api huma.API) {
 		url := global.S3Client.GetPublicUrl("litematica", file.Filename)
 
 		litematicaFile := &model.LitematicaFile{
-			LitematicaID: input.LitematicaID,
+			LitematicaID: input.Body.LitematicaID,
 			FileName:     file.Filename,
 			FilePath:     url.SignedURL,
 		}
@@ -293,12 +302,11 @@ func Litematica(api huma.API) {
 		Method:      "POST",
 		Path:        "/litematica/obj",
 	}, func(ctx context.Context, input *struct {
-		FileID     int    `header:"FileID" example:"1" doc:"FileID"`
-		Texurepack string `header:"Texurepack" example:"1" doc:"Texurepack"`
+		Body PostObj
 	}) (*NormalOutput, error) {
 		resp := &NormalOutput{}
 		file := model.LitematicaFile{}
-		global.DBEngine.Model(&model.LitematicaFile{}).Where("ID = ?", input.FileID).Find(&file)
+		global.DBEngine.Model(&model.LitematicaFile{}).Where("ID = ?", input.Body.FileID).Find(&file)
 
 		if file.ID == 0 {
 			resp.Body.Message = "File not found"
@@ -306,7 +314,7 @@ func Litematica(api huma.API) {
 		}
 
 		go func() {
-			lapi.MakeOBJ(file.FilePath, input.Texurepack, file.FileName, input.FileID)
+			lapi.MakeOBJ(file.FilePath, input.Body.Texurepack, file.FileName, input.Body.FileID)
 		}()
 
 		resp.Body.Message = "Success"
