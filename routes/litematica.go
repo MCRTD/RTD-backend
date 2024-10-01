@@ -67,6 +67,7 @@ func Litematica(api huma.API) {
 		Name        string `header:"Name" example:"litematica" doc:"Name"`
 		Version     string `header:"Version" example:"1.0" doc:"Version"`
 		Description string `header:"Description" example:"litematica" doc:"Description"`
+		FileType    string `header:"FileType" example:"litematica" doc:"litematica, schematic, world"`
 		Tags        string `header:"Tags" example:"litematica" doc:"Tags"`
 		GroupID     int    `header:"GroupID" example:"1" doc:"GroupID"`
 		ServerID    int    `header:"ServerID" example:"1" doc:"ServerID"`
@@ -114,6 +115,11 @@ func Litematica(api huma.API) {
 			return resp, huma.NewError(400, "Name is empty")
 		}
 
+		fileext := file.Filename[strings.LastIndex(file.Filename, ".")+1:]
+		if strings.Contains(file.Filename, ".tar.gz") {
+			fileext = "tar.gz"
+		}
+
 		litematica := &model.Litematica{
 			LitematicaName: input.Name,
 			Version:        input.Version,
@@ -124,6 +130,8 @@ func Litematica(api huma.API) {
 				{
 					Size:            int(file.Size),
 					Description:     input.Description,
+					FileType:        input.FileType,
+					FileExtension:   fileext,
 					FileName:        file.Filename,
 					FilePath:        url.SignedURL,
 					ReleaseDate:     global.DBEngine.NowFunc(),

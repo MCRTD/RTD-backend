@@ -61,6 +61,8 @@ type LitematicaFile struct {
 	gorm.Model
 	Size            int           `gorm:"not null"`
 	Description     string        `gorm:"not null"`
+	FileType        string        `gorm:"not null"` // litematica, schematic, world
+	FileExtension   string        `gorm:"not null"` // zip, litematica, schematic, tar.gz...
 	FileName        string        `gorm:"not null"`
 	FilePath        string        `gorm:"not null"`
 	DownloadCount   int           `gorm:"not null default:0"`
