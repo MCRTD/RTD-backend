@@ -72,6 +72,12 @@ type LitematicaFile struct {
 	LitematicaObj   LitematicaObj `gorm:"foreignKey:LitematicaObjID"`
 }
 
+type LitematicaVote struct {
+	gorm.Model
+	LitematicaID uint `gorm:"not null;uniqueIndex:idx_user_litematica"`
+	UserID       uint `gorm:"not null;uniqueIndex:idx_user_litematica"`
+}
+
 type Litematica struct {
 	gorm.Model
 	LitematicaName string  `gorm:"not null"`
@@ -79,6 +85,7 @@ type Litematica struct {
 	Description    string  `gorm:"not null"`
 	Tags           string  `gorm:"not null"`
 	Vote           int     `gorm:"not null Default:0"`
+	VotedUsers     []*User `gorm:"many2many:litematica_votes;"`
 	GroupID        *uint   `gorm:"default:null"`
 	Group          *Group  `gorm:"foreignKey:GroupID"`
 	ServerID       *uint   `gorm:"default:null"`

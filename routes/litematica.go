@@ -32,6 +32,10 @@ type LitematicaID struct {
 	LitematicaID int `json:"LitematicaID"`
 }
 
+type VoteInput struct {
+	LitematicaID uint `json:"LitematicaID"`
+}
+
 func Litematica(api huma.API) {
 	huma.Register(api, huma.Operation{
 		OperationID: "getlitematica",
@@ -340,6 +344,56 @@ func Litematica(api huma.API) {
 		}()
 
 		resp.Body.Message = "Success"
+		return resp, nil
+	})
+
+	huma.Register(api, huma.Operation{
+		OperationID: "voteLitematica",
+		Method:      "POST",
+		Path:        "/litematica/vote",
+		Middlewares: huma.Middlewares{middleware.ParseToken(api)},
+	}, func(ctx context.Context, input *struct {
+		Body VoteInput
+	}) (*NormalOutput, error) {
+		resp := &NormalOutput{}
+		userID := ctx.Value("userid").(uint)
+		var litematica model.Litematica
+		if err := global.DBEngine.First(&litematica, input.Body.LitematicaID).Error; err != nil {
+			return nil, huma.NewError(404, "Litematica not found")
+		}
+		var vote model.LitematicaVote
+		result := global.DBEngine.Where("litematica_id = ? AND user_id = ?",
+			input.Body.LitematicaID, userID).First(&vote)
+
+		tx := global.DBEngine.Begin()
+		if result.Error == gorm.ErrRecordNotFound {
+			if err := tx.Create(&model.LitematicaVote{
+				LitematicaID: input.Body.LitematicaID,
+				UserID:       userID,
+			}).Error; err != nil {
+				tx.Rollback()
+				return nil, err
+			}
+			if err := tx.Model(&litematica).Update("vote", litematica.Vote+1).Error; err != nil {
+				tx.Rollback()
+				return nil, err
+			}
+			resp.Body.Message = "Vote added"
+		} else {
+			if err := tx.Delete(&vote).Error; err != nil {
+				tx.Rollback()
+				return nil, err
+			}
+			if err := tx.Model(&litematica).Update("vote", litematica.Vote-1).Error; err != nil {
+				tx.Rollback()
+				return nil, err
+			}
+			resp.Body.Message = "Vote removed"
+		}
+		if err := tx.Commit().Error; err != nil {
+			tx.Rollback()
+			return nil, err
+		}
 		return resp, nil
 	})
 }
