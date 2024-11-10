@@ -79,10 +79,10 @@ type Litematica struct {
 	Description    string  `gorm:"not null"`
 	Tags           string  `gorm:"not null"`
 	Vote           int     `gorm:"not null Default:0"`
-	GroupID        uint    `gorm:"default:null"`
-	Group          Group   `gorm:"foreignKey:GroupID"`
-	ServerID       uint    `gorm:"default:null"`
-	Server         Server  `gorm:"foreignKey:ServerID"`
+	GroupID        *uint   `gorm:"default:null"`
+	Group          *Group  `gorm:"foreignKey:GroupID"`
+	ServerID       *uint   `gorm:"default:null"`
+	Server         *Server `gorm:"foreignKey:ServerID"`
 	Creators       []*User `gorm:"many2many:litematica_creators;"`
 	Images         []Image
 	Files          []LitematicaFile

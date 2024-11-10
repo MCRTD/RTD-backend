@@ -19,7 +19,7 @@ import (
 
 type LitematicaOutput struct {
 	Body struct {
-		Litematicas []model.Litematica `json:"servers"`
+		Litematicas []model.Litematica `json:"litematicas"`
 	}
 }
 
@@ -42,11 +42,23 @@ func Litematica(api huma.API) {
 	}) (*LitematicaOutput, error) {
 		resp := &LitematicaOutput{}
 		var Litematicas []model.Litematica
+
+		query := global.DBEngine.
+			Preload("Files.LitematicaObj").
+			Preload("Creators.Social", func(db *gorm.DB) *gorm.DB {
+				return db.Where("id IS NOT NULL")
+			}).
+			Preload("Creators", func(db *gorm.DB) *gorm.DB {
+				return db.Where("id IS NOT NULL")
+			}).
+			Model(&model.Litematica{})
+
 		if input.LitematicaID == "" {
-			global.DBEngine.Preload("Files.LitematicaObj").Preload("Creators").Model(&model.Litematica{}).Find(&Litematicas)
+			query.Find(&Litematicas)
 		} else {
-			global.DBEngine.Preload("Files.LitematicaObj").Preload("Creators").Model(&model.Litematica{}).Where("ID = ?", input.LitematicaID).Find(&Litematicas)
+			query.Where("ID = ?", input.LitematicaID).Find(&Litematicas)
 		}
+
 		for i := range Litematicas {
 			for j := range Litematicas[i].Creators {
 				Litematicas[i].Creators[j].Password = ""
@@ -144,11 +156,13 @@ func Litematica(api huma.API) {
 		litematica.Creators = append(litematica.Creators, me)
 
 		if input.GroupID != -1 {
-			litematica.GroupID = uint(input.GroupID)
+			groupID := uint(input.GroupID)
+			litematica.GroupID = &groupID
 		}
 
 		if input.ServerID != -1 {
-			litematica.ServerID = uint(input.ServerID)
+			serverID := uint(input.ServerID)
+			litematica.ServerID = &serverID
 		}
 
 		global.DBEngine.Create(litematica)

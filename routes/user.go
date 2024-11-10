@@ -60,7 +60,7 @@ func User(api huma.API) {
 		if input.User == "" {
 			resp := []*model.User{}
 			output := &UserOutput{}
-			res := global.DBEngine.Preload("Litematicas").Preload("Groups").Preload("Servers").Model(&model.User{}).Find(&resp)
+			res := global.DBEngine.Preload("Litematicas").Preload("Groups").Preload("Servers").Preload("Social").Model(&model.User{}).Find(&resp)
 			if res.Error != nil && !errors.Is(res.Error, gorm.ErrRecordNotFound) {
 				return nil, res.Error
 			}
@@ -72,7 +72,7 @@ func User(api huma.API) {
 
 		} else {
 			resp := &model.User{}
-			res := global.DBEngine.Preload("Litematicas").Preload("Groups").Preload("Servers").Model(&model.User{}).Where("ID = ?", input.User).First(&resp)
+			res := global.DBEngine.Preload("Litematicas").Preload("Groups").Preload("Servers").Preload("Social").Model(&model.User{}).Where("ID = ?", input.User).First(&resp)
 			if errors.Is(res.Error, gorm.ErrRecordNotFound) {
 				return nil, res.Error
 			}
