@@ -76,6 +76,7 @@ func Syncddb() {
 		&model.Image{},
 		&model.LitematicaObj{},
 		&model.LitematicaFile{},
+		&model.LitematicaVote{},
 		&model.Litematica{},
 		&model.Group{},
 		&model.Server{},
