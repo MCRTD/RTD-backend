@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"mime/multipart"
+	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
@@ -33,7 +34,7 @@ type LitematicaID struct {
 }
 
 type VoteInput struct {
-	LitematicaID uint `json:"LitematicaID"`
+	LitematicaID int `json:"LitematicaID"`
 }
 
 func Litematica(api huma.API) {
@@ -356,20 +357,25 @@ func Litematica(api huma.API) {
 		Body VoteInput
 	}) (*NormalOutput, error) {
 		resp := &NormalOutput{}
-		userID := ctx.Value("userid").(uint)
+		userIDStr := ctx.Value("userid").(string)
+		userID, err := strconv.ParseUint(userIDStr, 10, 32)
+		if err != nil {
+			return nil, huma.NewError(400, "Invalid user ID")
+		}
+
 		var litematica model.Litematica
 		if err := global.DBEngine.First(&litematica, input.Body.LitematicaID).Error; err != nil {
 			return nil, huma.NewError(404, "Litematica not found")
 		}
 		var vote model.LitematicaVote
 		result := global.DBEngine.Where("litematica_id = ? AND user_id = ?",
-			input.Body.LitematicaID, userID).First(&vote)
+			input.Body.LitematicaID, uint(userID)).First(&vote)
 
 		tx := global.DBEngine.Begin()
 		if result.Error == gorm.ErrRecordNotFound {
 			if err := tx.Create(&model.LitematicaVote{
-				LitematicaID: input.Body.LitematicaID,
-				UserID:       userID,
+				LitematicaID: uint(input.Body.LitematicaID),
+				UserID:       uint(userID),
 			}).Error; err != nil {
 				tx.Rollback()
 				return nil, err
