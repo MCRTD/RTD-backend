@@ -368,8 +368,7 @@ func Litematica(api huma.API) {
 			return nil, huma.NewError(404, "Litematica not found")
 		}
 		var vote model.LitematicaVote
-		result := global.DBEngine.Where("litematica_id = ? AND user_id = ?",
-			input.Body.LitematicaID, uint(userID)).First(&vote)
+		result := global.DBEngine.Unscoped().Where("litematica_id = ? AND user_id = ?", input.Body.LitematicaID, uint(userID)).First(&vote)
 
 		tx := global.DBEngine.Begin()
 		if result.Error == gorm.ErrRecordNotFound {
@@ -386,7 +385,7 @@ func Litematica(api huma.API) {
 			}
 			resp.Body.Message = "Vote added"
 		} else {
-			if err := tx.Delete(&vote).Error; err != nil {
+			if err := tx.Unscoped().Delete(&vote).Error; err != nil {
 				tx.Rollback()
 				return nil, err
 			}

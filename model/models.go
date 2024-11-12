@@ -18,21 +18,22 @@ type Social struct {
 
 type User struct {
 	gorm.Model
-	Username      string        `gorm:"not null"`
-	Email         string        `gorm:"not null"`
-	Password      string        `gorm:"not null" json:"Password,omitempty"`
-	DiscordID     *int          `gorm:"default:null"`
-	Description   string        `gorm:"default:null"`
-	Avatar        string        `gorm:"default:null"`
-	AvatarPath    string        `gorm:"default:null"`
-	JoinedTime    time.Time     `gorm:"not null"`
-	LasttimeLogin time.Time     `gorm:"not null"`
-	Admin         bool          `gorm:"not null default:false"`
-	SocialID      uint          `gorm:"not null"`
-	Social        Social        `gorm:"foreignKey:SocialID"`
-	Litematicas   []*Litematica `gorm:"many2many:litematica_creators;"`
-	Groups        []*Group      `gorm:"many2many:user_groups;"`
-	Servers       []*Server     `gorm:"many2many:user_servers;"`
+	Username         string        `gorm:"not null"`
+	Email            string        `gorm:"not null"`
+	Password         string        `gorm:"not null" json:"Password,omitempty"`
+	DiscordID        *int          `gorm:"default:null"`
+	Description      string        `gorm:"default:null"`
+	Avatar           string        `gorm:"default:null"`
+	AvatarPath       string        `gorm:"default:null"`
+	JoinedTime       time.Time     `gorm:"not null"`
+	LasttimeLogin    time.Time     `gorm:"not null"`
+	Admin            bool          `gorm:"not null default:false"`
+	SocialID         uint          `gorm:"not null"`
+	Social           Social        `gorm:"foreignKey:SocialID"`
+	Litematicas      []*Litematica `gorm:"many2many:litematica_creators;"`
+	Groups           []*Group      `gorm:"many2many:user_groups;"`
+	Servers          []*Server     `gorm:"many2many:user_servers;"`
+	VotedLitematicas []*Litematica `gorm:"many2many:litematica_votes;"`
 }
 
 type Comment struct {
