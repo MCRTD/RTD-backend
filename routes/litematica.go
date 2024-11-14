@@ -314,11 +314,15 @@ func Litematica(api huma.API) {
 		Method:      "DELETE",
 		Path:        "/litematica/image",
 	}, func(ctx context.Context, input *struct {
-		body ImageInputID
+		Body ImageInputID
 	}) (*NormalOutput, error) {
 		resp := &NormalOutput{}
 
-		global.DBEngine.Delete(&model.Image{Model: gorm.Model{ID: uint(input.body.ImageID)}})
+		success := global.DBEngine.Delete(&model.Image{Model: gorm.Model{ID: uint(input.Body.ImageID)}})
+		if success.Error != nil {
+			resp.Body.Message = "Failed"
+			return resp, huma.Error400BadRequest("Failed")
+		}
 
 		resp.Body.Message = "Success"
 		return resp, nil
