@@ -18,21 +18,22 @@ type Social struct {
 
 type User struct {
 	gorm.Model
-	Username      string        `gorm:"not null"`
-	Email         string        `gorm:"not null"`
-	Password      string        `gorm:"not null" json:"Password,omitempty"`
-	DiscordID     *int          `gorm:"default:null"`
-	Description   string        `gorm:"default:null"`
-	Avatar        string        `gorm:"default:null"`
-	AvatarPath    string        `gorm:"default:null"`
-	JoinedTime    time.Time     `gorm:"not null"`
-	LasttimeLogin time.Time     `gorm:"not null"`
-	Admin         bool          `gorm:"not null default:false"`
-	SocialID      uint          `gorm:"not null"`
-	Social        Social        `gorm:"foreignKey:SocialID"`
-	Litematicas   []*Litematica `gorm:"many2many:litematica_creators;"`
-	Groups        []*Group      `gorm:"many2many:user_groups;"`
-	Servers       []*Server     `gorm:"many2many:user_servers;"`
+	Username         string        `gorm:"not null"`
+	Email            string        `gorm:"not null"`
+	Password         string        `gorm:"not null" json:"Password,omitempty"`
+	DiscordID        *int          `gorm:"default:null"`
+	Description      string        `gorm:"default:null"`
+	Avatar           string        `gorm:"default:null"`
+	AvatarPath       string        `gorm:"default:null"`
+	JoinedTime       time.Time     `gorm:"not null"`
+	LasttimeLogin    time.Time     `gorm:"not null"`
+	Admin            bool          `gorm:"not null default:false"`
+	SocialID         uint          `gorm:"not null"`
+	Social           Social        `gorm:"foreignKey:SocialID"`
+	Litematicas      []*Litematica `gorm:"many2many:litematica_creators;"`
+	Groups           []*Group      `gorm:"many2many:user_groups;"`
+	Servers          []*Server     `gorm:"many2many:user_servers;"`
+	Votes_litematica []Litematica  `gorm:"many2many:litematica_votes;"`
 }
 
 type Comment struct {
@@ -72,12 +73,6 @@ type LitematicaFile struct {
 	LitematicaObj   LitematicaObj `gorm:"foreignKey:LitematicaObjID"`
 }
 
-type LitematicaVote struct {
-	gorm.Model
-	LitematicaID uint `gorm:"not null;uniqueIndex:idx_user_litematica"`
-	UserID       uint `gorm:"not null;uniqueIndex:idx_user_litematica"`
-}
-
 type Litematica struct {
 	gorm.Model
 	LitematicaName string  `gorm:"not null"`
@@ -85,7 +80,7 @@ type Litematica struct {
 	Description    string  `gorm:"not null"`
 	Tags           string  `gorm:"not null"`
 	Vote           int     `gorm:"not null Default:0"`
-	VotedUsers     []*User `gorm:"many2many:litematica_votes;"`
+	VoteUsers      []User  `gorm:"many2many:litematica_votes;"`
 	GroupID        *uint   `gorm:"default:null"`
 	Group          *Group  `gorm:"foreignKey:GroupID"`
 	ServerID       *uint   `gorm:"default:null"`

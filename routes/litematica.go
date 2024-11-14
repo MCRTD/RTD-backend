@@ -11,6 +11,7 @@ import (
 	"log"
 	"mime/multipart"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
@@ -36,7 +37,7 @@ type LitematicaID struct {
 }
 
 type VoteInput struct {
-	LitematicaID uint `json:"LitematicaID"`
+	LitematicaID int `json:"LitematicaID"`
 }
 
 func Litematica(api huma.API) {
@@ -380,21 +381,34 @@ func Litematica(api huma.API) {
 		Body VoteInput
 	}) (*NormalOutput, error) {
 		resp := &NormalOutput{}
-		userID := ctx.Value("userid").(uint)
-		var litematica model.Litematica
-		if err := global.DBEngine.First(&litematica, input.Body.LitematicaID).Error; err != nil {
-			return nil, huma.NewError(404, "Litematica not found")
+		userIDStr := ctx.Value("userid").(string)
+		userID, err := strconv.ParseUint(userIDStr, 10, 32)
+		if err != nil {
+			return nil, huma.NewError(400, "Invalid user ID")
 		}
-		var vote model.LitematicaVote
-		result := global.DBEngine.Where("litematica_id = ? AND user_id = ?",
-			input.Body.LitematicaID, userID).First(&vote)
 
 		tx := global.DBEngine.Begin()
-		if result.Error == gorm.ErrRecordNotFound {
-			if err := tx.Create(&model.LitematicaVote{
-				LitematicaID: input.Body.LitematicaID,
-				UserID:       userID,
-			}).Error; err != nil {
+		var litematica model.Litematica
+		if err := tx.First(&litematica, input.Body.LitematicaID).Error; err != nil {
+			tx.Rollback()
+			return nil, huma.NewError(404, "Litematica not found")
+		}
+		var user model.User
+		if err := tx.First(&user, userID).Error; err != nil {
+			tx.Rollback()
+			return nil, huma.NewError(404, "User not found")
+		}
+		var count int64
+		if err := tx.Table("litematica_votes").
+			Where("litematica_id = ? AND user_id = ?", litematica.ID, userID).
+			Count(&count).Error; err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+		hasVoted := count > 0
+
+		if !hasVoted {
+			if err := tx.Model(&litematica).Association("VoteUsers").Append(&user); err != nil {
 				tx.Rollback()
 				return nil, err
 			}
@@ -404,7 +418,7 @@ func Litematica(api huma.API) {
 			}
 			resp.Body.Message = "Vote added"
 		} else {
-			if err := tx.Delete(&vote).Error; err != nil {
+			if err := tx.Model(&litematica).Association("VoteUsers").Delete(&user); err != nil {
 				tx.Rollback()
 				return nil, err
 			}
@@ -414,6 +428,7 @@ func Litematica(api huma.API) {
 			}
 			resp.Body.Message = "Vote removed"
 		}
+
 		if err := tx.Commit().Error; err != nil {
 			tx.Rollback()
 			return nil, err
