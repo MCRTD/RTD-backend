@@ -241,11 +241,14 @@ func Litematica(api huma.API) {
 		Method:      "POST",
 		Path:        "/litematica/image",
 	}, func(ctx context.Context, input *struct {
-		Body    LitematicaID
 		RawBody multipart.Form
 	}) (*NormalOutput, error) {
 		resp := &NormalOutput{}
-
+		litematicaID, err := strconv.ParseUint(input.RawBody.Value["LitematicaID"][0], 10, 64)
+		if err != nil {
+			resp.Body.Message = "Invalid LitematicaID"
+			return resp, huma.Error400BadRequest("Invalid LitematicaID")
+		}
 		files := input.RawBody.File["image"]
 		for _, file := range files {
 			if file.Size > 1024*1024*35 {
@@ -284,7 +287,7 @@ func Litematica(api huma.API) {
 			}
 			url := global.S3Client.GetPublicUrl("images", newfilename)
 			litematicaImage := &model.Image{
-				LitematicaID: uint(input.Body.LitematicaID),
+				LitematicaID: uint(litematicaID),
 				ImageName:    newfilename,
 				ImagePath:    url.SignedURL,
 			}
