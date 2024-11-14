@@ -7,11 +7,14 @@ import (
 	"RTD-backend/model"
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"mime/multipart"
+	"net/http"
 	"strings"
 
 	"github.com/google/uuid"
+	storage_go "github.com/supabase-community/storage-go"
 
 	"github.com/danielgtaylor/huma/v2"
 	"gorm.io/gorm"
@@ -257,7 +260,23 @@ func Litematica(api huma.API) {
 			}
 			parts := strings.Split(file.Filename, ".")
 			newfilename := uuid.New().String() + "." + parts[len(parts)-1]
-			_, err = global.S3Client.UploadFile("images", newfilename, filedata)
+			buffer := make([]byte, 512)
+			_, err = filedata.Read(buffer)
+			if err != nil {
+				fmt.Println("Failed to read file:", err)
+				resp.Body.Message = "Failed"
+				return resp, err
+			}
+			_, err = filedata.Seek(0, io.SeekStart)
+			if err != nil {
+				fmt.Println("Failed to seek file:", err)
+				resp.Body.Message = "Failed"
+				return resp, err
+			}
+			filetype := http.DetectContentType(buffer)
+			_, err = global.S3Client.UploadFile("images", newfilename, filedata, storage_go.FileOptions{
+				ContentType: &filetype,
+			})
 			if err != nil {
 				resp.Body.Message = "Failed"
 				return resp, huma.Error400BadRequest("Failed")
@@ -268,7 +287,12 @@ func Litematica(api huma.API) {
 				ImageName:    newfilename,
 				ImagePath:    url.SignedURL,
 			}
-			global.DBEngine.Create(litematicaImage)
+			success := global.DBEngine.Create(litematicaImage)
+			if success.Error != nil {
+				resp.Body.Message = "Failed"
+				return resp, huma.Error400BadRequest("Failed")
+			}
+
 		}
 		resp.Body.Message = "Success"
 		return resp, nil
