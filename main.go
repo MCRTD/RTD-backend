@@ -96,7 +96,7 @@ func SetupDB() error {
 	if err != nil {
 		return err
 	}
-	Syncddb()
+	// Syncddb()
 	_, error := global.S3Client.GetBucket("litematica")
 	if error != nil {
 		_, err := global.S3Client.CreateBucket("litematica", storage_go.BucketOptions{

@@ -48,7 +48,7 @@ type Image struct {
 	gorm.Model
 	ImageName    string `gorm:"not null"`
 	ImagePath    string `gorm:"not null"`
-	LitematicaID uint   `gorm:"not null"`
+	LitematicaID uint   `gorm:"not null;index"`
 }
 
 type LitematicaObj struct {
@@ -86,7 +86,7 @@ type Litematica struct {
 	ServerID       *uint   `gorm:"default:null"`
 	Server         *Server `gorm:"foreignKey:ServerID"`
 	Creators       []*User `gorm:"many2many:litematica_creators;"`
-	Images         []Image
+	Images         []Image `gorm:"foreignKey:LitematicaID"`
 	Files          []LitematicaFile
 	Comments       []Comment
 }
