@@ -40,6 +40,10 @@ type VoteInput struct {
 	LitematicaID int `json:"LitematicaID"`
 }
 
+type ImageInputID struct {
+	ImageID int `json:"ImageID"`
+}
+
 func Litematica(api huma.API) {
 	huma.Register(api, huma.Operation{
 		OperationID: "getlitematica",
@@ -57,6 +61,9 @@ func Litematica(api huma.API) {
 				return db.Where("id IS NOT NULL")
 			}).
 			Preload("Creators", func(db *gorm.DB) *gorm.DB {
+				return db.Where("id IS NOT NULL")
+			}).
+			Preload("Images", func(db *gorm.DB) *gorm.DB {
 				return db.Where("id IS NOT NULL")
 			}).
 			Model(&model.Litematica{})
@@ -307,11 +314,11 @@ func Litematica(api huma.API) {
 		Method:      "DELETE",
 		Path:        "/litematica/image",
 	}, func(ctx context.Context, input *struct {
-		ImageID uint `header:"ImageID" example:"1" doc:"ImageID"`
+		body ImageInputID
 	}) (*NormalOutput, error) {
 		resp := &NormalOutput{}
 
-		global.DBEngine.Delete(&model.Image{Model: gorm.Model{ID: input.ImageID}})
+		global.DBEngine.Delete(&model.Image{Model: gorm.Model{ID: uint(input.body.ImageID)}})
 
 		resp.Body.Message = "Success"
 		return resp, nil

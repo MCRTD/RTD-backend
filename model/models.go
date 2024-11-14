@@ -75,18 +75,18 @@ type LitematicaFile struct {
 
 type Litematica struct {
 	gorm.Model
-	LitematicaName string  `gorm:"not null"`
-	Version        string  `gorm:"not null"`
-	Description    string  `gorm:"not null"`
-	Tags           string  `gorm:"not null"`
-	Vote           int     `gorm:"not null Default:0"`
-	VoteUsers      []User  `gorm:"many2many:litematica_votes;"`
-	GroupID        *uint   `gorm:"default:null"`
-	Group          *Group  `gorm:"foreignKey:GroupID"`
-	ServerID       *uint   `gorm:"default:null"`
-	Server         *Server `gorm:"foreignKey:ServerID"`
-	Creators       []*User `gorm:"many2many:litematica_creators;"`
-	Images         []Image `gorm:"foreignKey:LitematicaID"`
+	LitematicaName string   `gorm:"not null"`
+	Version        string   `gorm:"not null"`
+	Description    string   `gorm:"not null"`
+	Tags           string   `gorm:"not null"`
+	Vote           int      `gorm:"not null Default:0"`
+	VoteUsers      []User   `gorm:"many2many:litematica_votes;"`
+	GroupID        *uint    `gorm:"default:null"`
+	Group          *Group   `gorm:"foreignKey:GroupID"`
+	ServerID       *uint    `gorm:"default:null"`
+	Server         *Server  `gorm:"foreignKey:ServerID"`
+	Creators       []*User  `gorm:"many2many:litematica_creators;"`
+	Images         []*Image `gorm:"foreignKey:LitematicaID"`
 	Files          []LitematicaFile
 	Comments       []Comment
 }
