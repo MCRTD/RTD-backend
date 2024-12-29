@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"RTD-backend/global"
+	"RTD-backend/model"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -114,6 +116,23 @@ func ReflashHandler(ctx huma.Context, next func(huma.Context)) {
 	next(ctx)
 }
 
+func Getuserid(ctx huma.Context) (string, error) {
+	tokenString, err := huma.ReadCookie(ctx, "token")
+	if err != nil || tokenString.Value == "" {
+		return "", fmt.Errorf("Forbidden")
+	}
+
+	token, err := jwt.Parse(tokenString.Value, func(token *jwt.Token) (interface{}, error) {
+		return secretKey, nil
+	})
+	if err != nil || !token.Valid {
+		return "", fmt.Errorf("Forbidden")
+	}
+
+	userid := token.Claims.(jwt.MapClaims)["userid"].(string)
+	return userid, nil
+}
+
 func ParseToken(api huma.API) func(ctx huma.Context, next func(huma.Context)) {
 
 	return func(ctx huma.Context, next func(huma.Context)) {
@@ -147,6 +166,26 @@ func ParseToken(api huma.API) func(ctx huma.Context, next func(huma.Context)) {
 
 		ctx = huma.WithValue(ctx, "userid", token.Claims.(jwt.MapClaims)["userid"].(string))
 
+		next(ctx)
+	}
+}
+
+func IsAdmin(api huma.API) func(ctx huma.Context, next func(huma.Context)) {
+	return func(ctx huma.Context, next func(huma.Context)) {
+		userid, err := Getuserid(ctx)
+		if err != nil {
+			huma.WriteErr(api, ctx, http.StatusForbidden, "Forbidden")
+			return
+		}
+
+		var user model.User
+		result := global.DBEngine.First(&user, "id = ?", userid)
+		if result.Error != nil || !user.Admin {
+			huma.WriteErr(api, ctx, http.StatusForbidden, "Forbidden")
+			return
+		}
+
+		ctx = huma.WithValue(ctx, "userid", userid)
 		next(ctx)
 	}
 }

@@ -93,22 +93,28 @@ type Litematica struct {
 
 type Group struct {
 	gorm.Model
-	GroupName   string  `gorm:"not null"`
-	Description string  `gorm:"not null"`
-	Avatar      string  `gorm:"not null"`
-	SocialID    uint    `gorm:"not null"`
-	Social      Social  `gorm:"foreignKey:SocialID"`
-	Users       []*User `gorm:"many2many:user_groups;"`
+	GroupName    string  `gorm:"not null"`
+	Description  string  `gorm:"not null"`
+	Avatar       string  `gorm:"not null"`
+	SocialID     uint    `gorm:"not null"`
+	Social       Social  `gorm:"foreignKey:SocialID"`
+	GroupOwnerID uint    `gorm:"not null"`
+	GroupOwner   User    `gorm:"foreignKey:GroupOwnerID"`
+	GroupAdmins  []*User `gorm:"many2many:group_admins;"`
+	Users        []*User `gorm:"many2many:user_groups;"`
 }
 
 type Server struct {
 	gorm.Model
-	ServerName  string  `gorm:"not null"`
-	Description string  `gorm:"not null"`
-	Avatar      string  `gorm:"not null"`
-	SocialID    uint    `gorm:"not null"`
-	Social      Social  `gorm:"foreignKey:SocialID"`
-	Users       []*User `gorm:"many2many:user_servers;"`
+	ServerName    string  `gorm:"not null"`
+	Description   string  `gorm:"not null"`
+	Avatar        string  `gorm:"not null"`
+	SocialID      uint    `gorm:"not null"`
+	Social        Social  `gorm:"foreignKey:SocialID"`
+	ServerOwnerID uint    `gorm:"not null"`
+	ServerOwner   User    `gorm:"foreignKey:ServerOwnerID"`
+	ServerAdmins  []*User `gorm:"many2many:server_admins;"`
+	Users         []*User `gorm:"many2many:user_servers;"`
 }
 
 type ResourcePack struct {

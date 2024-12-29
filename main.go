@@ -57,6 +57,7 @@ func main() {
 	routes.User(api)
 	routes.Node(api)
 	routes.Litematica(api)
+	routes.Server(api)
 
 	port := os.Getenv("PORT")
 	if port == "" {
