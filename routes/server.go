@@ -36,7 +36,7 @@ func Server(api huma.API) {
 		Method:      "GET",
 		Path:        "/server",
 	}, func(ctx context.Context, input *struct {
-		Serverid string `query:"user" example:"user" doc:"Username."`
+		Serverid string `query:"serverid" example:"1" doc:"serverid."`
 	}) (*ServerOutput, error) {
 		resp := &ServerOutput{}
 		var servers []model.Server
